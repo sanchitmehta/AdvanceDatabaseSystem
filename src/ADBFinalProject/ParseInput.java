@@ -9,7 +9,7 @@ public class ParseInput {
 
   private static int time;
 
-  private TransactionManager transactionManager = new TransactionManager();
+  private TransactionManager transactionManager = new TransactionManager(runningTransactions);
 
   /**
    * Parses a single line from the text file

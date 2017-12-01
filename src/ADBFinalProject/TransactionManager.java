@@ -1,10 +1,15 @@
 package ADBFinalProject;
 
+import java.util.HashMap;
 import java.util.Map;
 
 class TransactionManager {
 
   private Map<Integer, Transaction> runningTransactions;
+
+  TransactionManager() {
+    this.runningTransactions = new HashMap<>();
+  }
 
   /**
    * Adds the transaction to the running Transactions map to keep a track of currently running
