@@ -9,7 +9,7 @@ public class ParseInput {
 
   private static int time;
 
-  TransactionManager transactionManager = new TransactionManager();
+  private TransactionManager transactionManager = new TransactionManager();
 
   /**
    * Parses a single line from the text file
@@ -33,18 +33,26 @@ public class ParseInput {
   }
 
   private void parseBegin(String line) {
-    String transactionName = line.substring(line.indexOf("T") + 1, line.indexOf(")"));
-    int transactionId = Integer.parseInt(transactionName);
+    int transactionId = getTransactionId(line);
     transactionManager.addTransaction(
         transactionId,
         new Transaction(transactionId, time));
   }
 
   private void parseEnd(String line) {
-
+    int transactionId = getTransactionId(line);
+    if (!transactionManager.deleteTransaction(transactionId)) {
+      System.out.println("The transaction does not exists");
+    } else {
+      System.out.println("Transaction T" + transactionId + " completed");
+    }
   }
 
   private void parseDump(String line) {
 
+  }
+
+  private int getTransactionId(String line) {
+    return Integer.parseInt(line.substring(line.indexOf("T") + 1, line.indexOf(")")));
   }
 }
