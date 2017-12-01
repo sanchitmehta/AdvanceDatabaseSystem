@@ -1,5 +1,5 @@
+package ADBFinalProject;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -11,7 +11,7 @@ import java.util.Set;
  * Must specify index to create the object
  * </p>
  *
- * @author Sanchit Mehta, Pranav Chapekhar
+ * @author Sanchit Mehta, Pranav Chaphekar
  * @see Site
  * @see Transaction
  * @see TransactionManager
@@ -21,7 +21,7 @@ public class Variable {
   //Transactions holding the read lock
   Set<Transaction> readLocks;
 
-  //Transaction holding the write lock
+  //ADBFinalProject.Transaction holding the write lock
   Transaction writeLock;
 
   int idx;

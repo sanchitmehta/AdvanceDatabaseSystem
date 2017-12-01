@@ -1,3 +1,5 @@
+package ADBFinalProject;
+
 /**
  * Reads the input and parses it
  *
@@ -6,6 +8,8 @@
 public class ParseInput {
 
   private static int time;
+
+  TransactionManager transactionManager = new TransactionManager();
 
   /**
    * Parses a single line from the text file
@@ -29,7 +33,11 @@ public class ParseInput {
   }
 
   private void parseBegin(String line) {
-
+    String transactionName = line.substring(line.indexOf("T") + 1, line.indexOf(")"));
+    int transactionId = Integer.parseInt(transactionName);
+    transactionManager.addTransaction(
+        transactionId,
+        new Transaction(transactionId, time));
   }
 
   private void parseEnd(String line) {

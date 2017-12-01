@@ -1,3 +1,5 @@
+package ADBFinalProject;
+
 import java.util.*;
 
 /**
@@ -14,8 +16,8 @@ import java.util.*;
 public class Site {
 
   private int id;
-  private Map<Integer,Variable> indexToVarMap;
-  private Map<Integer,Transaction> runningTransactionsMap;
+  private Map<Integer, Variable> indexToVarMap;
+  private Map<Integer, Transaction> runningTransactionsMap;
   private boolean isSiteRunning;
 
   public Site(int id) {
