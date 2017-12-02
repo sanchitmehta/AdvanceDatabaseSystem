@@ -88,13 +88,15 @@ class Site {
   }
 
   /**
-   * Prints the information about all the variables at this site
+   * Getter for IndexToVariable Map
+   * @return Map
    */
+  public Map<Integer, Variable> getIndexToVarMap() {
+    return indexToVarMap;
+  }
+
   void printData() {
-    System.out.println("Site : " + getId());
-    for (Integer index : indexToVarMap.keySet()) {
-      System.out.println("x" + index + " : " + indexToVarMap.get(index).getVal());
-    }
+
   }
 
   @Override

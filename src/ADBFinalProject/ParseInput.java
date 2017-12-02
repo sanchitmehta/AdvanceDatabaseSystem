@@ -1,5 +1,7 @@
 package ADBFinalProject;
 
+import java.util.Map;
+
 /**
  * Reads the input and parses it
  *
@@ -72,22 +74,26 @@ class ParseInput {
 
   private void dump() {
     for (Site site : transactionManager.getSites()) {
-      site.printData();
+      dumpAtSite(site);
     }
   }
 
   private void dumpAtSite(Site site) {
-    site.printData();
+    System.out.println(site.toString());
+    Map<Integer, Variable> indexToVarMap = site.getIndexToVarMap();
+    for (Integer index : indexToVarMap.keySet()) {
+      System.out.println("x" + index + " : " + indexToVarMap.get(index).getVal());
+    }
   }
 
   private void dumpxAtAllSites(int variableIdx) {
     for (Site site : transactionManager.getSites()) {
       Variable variable = site.getVariableByIndex(variableIdx);
-      if (variable == null) {
+      if (variable != null) {
+        System.out.println(variable.toString() + " " + variable.getVal());
+      } else {
         System.out.println(
             "Variable x" + variableIdx + " is not present at site " + site.toString());
-      } else {
-        System.out.println(variable.toString() + " " + variable.getVal());
       }
     }
   }
