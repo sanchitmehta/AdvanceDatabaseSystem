@@ -19,7 +19,7 @@ public class MainApp {
       }
     } else {
       System.out.println(
-          "Input file not passed. Please run the program as: javac MainApp.java input_file_name");
+          "Wrong Input provided. Please run the program as: javac MainApp.java input_file_name");
       System.exit(0);
     }
   }

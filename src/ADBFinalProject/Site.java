@@ -17,6 +17,7 @@ public class Site {
   private Map<Integer, Variable> indexToVarMap;
   private Map<Integer, Transaction> runningTransactionsMap;
   private boolean isSiteRunning;
+  private static final int NUMBER_OF_VARIABLES = 20;
 
   Site(int id) {
     this.indexToVarMap = new HashMap<>();

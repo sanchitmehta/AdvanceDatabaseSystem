@@ -10,6 +10,4 @@ public class Transaction {
     this.id = transactionId;
     this.startTime = startTime;
   }
-
-
 }

@@ -7,9 +7,18 @@ class TransactionManager {
 
   private Map<Integer, Transaction> runningTransactions;
   private Site[] sites;
+  private static final int NUMBER_OF_SITES = 10;
 
   TransactionManager() {
     this.runningTransactions = new HashMap<>();
+    createSites();
+  }
+
+  private void createSites() {
+    this.sites = new Site[NUMBER_OF_SITES + 1];
+    for (int i = 1; i < NUMBER_OF_SITES + 1; i++) {
+      sites[i] = new Site(i);
+    }
   }
 
   /**
@@ -44,5 +53,4 @@ class TransactionManager {
   Site[] getSites() {
     return sites;
   }
-
 }
