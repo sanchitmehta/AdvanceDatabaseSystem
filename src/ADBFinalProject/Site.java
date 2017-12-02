@@ -3,15 +3,13 @@ package ADBFinalProject;
 import java.util.*;
 
 /**
- *
  * Describes each distributed site that handles
  * the read and write on variables
  *
- * @author    Sanchit Mehta, Pranav Chapekhar
- * @see       Site
- * @see       Transaction
- * @see       TransactionManager
- *
+ * @author Sanchit Mehta, Pranav Chapekhar
+ * @see Site
+ * @see Transaction
+ * @see TransactionManager
  */
 public class Site {
 
@@ -20,21 +18,21 @@ public class Site {
   private Map<Integer, Transaction> runningTransactionsMap;
   private boolean isSiteRunning;
 
-  public Site(int id) {
+  Site(int id) {
     this.indexToVarMap = new HashMap<>();
     this.isSiteRunning = true;
     this.runningTransactionsMap = new HashMap<>();
     this.id = id;
   }
 
-  public void failCurrentSite(){
-    for(Variable v:indexToVarMap.values()){
+  void failCurrentSite() {
+    for (Variable v : indexToVarMap.values()) {
       v.removeLocksOnTrasanction(new ArrayList<>(runningTransactionsMap.values()));
     }
-    this.isSiteRunning=false;
+    this.isSiteRunning = false;
   }
 
-  public boolean isSiteRunning(){
+  boolean isSiteRunning() {
     return this.isSiteRunning;
   }
 
@@ -44,15 +42,12 @@ public class Site {
    *
    * @param tID transaction id on which read lock is to be added
    * @param vID variable id on on which read lock is to be added
-   * @return true if was successfully able to add read
-   *         lock on transaction tID
-   *         false if there is already a read lock on
-   *         this transaction/site does have this transaciton/var
-   *
+   * @return true if was successfully able to add read lock on transaction tID false if there is
+   * already a read lock on this transaction/site does have this transaciton/var
    */
-  public boolean createReadLockOnTransaction(int tID,int vID){
-    if(!runningTransactionsMap.containsKey(tID)
-      ||!indexToVarMap.containsKey(vID)){
+  boolean createReadLockOnTransaction(int tID, int vID) {
+    if (!runningTransactionsMap.containsKey(tID)
+        || !indexToVarMap.containsKey(vID)) {
       return false;
     }
     Transaction t = runningTransactionsMap.get(tID);
@@ -67,15 +62,12 @@ public class Site {
    *
    * @param tID transaction id on which read lock is to be added
    * @param vID variable id on on which read lock is to be added
-   * @return true if was successfully able to add read
-   *         lock on transaction tID
-   *         false if there is already a read lock on
-   *         this transaction/site does have this transaciton/var
-   *
+   * @return true if was successfully able to add read lock on transaction tID false if there is
+   * already a read lock on this transaction/site does have this transaciton/var
    */
-  public boolean createWriteLockOnTransaction(int tID,int vID){
-    if(!runningTransactionsMap.containsKey(tID)
-      ||!indexToVarMap.containsKey(vID)){
+  boolean createWriteLockOnTransaction(int tID, int vID) {
+    if (!runningTransactionsMap.containsKey(tID)
+        || !indexToVarMap.containsKey(vID)) {
       return false;
     }
     Transaction t = runningTransactionsMap.get(tID);
@@ -83,8 +75,14 @@ public class Site {
     return v.addWriteLock(t);
   }
 
-  public int getId() {
+  private int getId() {
     return id;
   }
 
+  void printData() {
+    System.out.println("Site : " + getId());
+    for (Integer index : indexToVarMap.keySet()) {
+      System.out.println("x" + index + " : " + indexToVarMap.get(index).getVal());
+    }
+  }
 }

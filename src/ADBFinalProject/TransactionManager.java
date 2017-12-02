@@ -6,6 +6,7 @@ import java.util.Map;
 class TransactionManager {
 
   private Map<Integer, Transaction> runningTransactions;
+  private Site[] sites;
 
   TransactionManager() {
     this.runningTransactions = new HashMap<>();
@@ -36,4 +37,12 @@ class TransactionManager {
       return false;
     }
   }
+
+  /**
+   * @return Array of sites
+   */
+  Site[] getSites() {
+    return sites;
+  }
+
 }

@@ -47,8 +47,12 @@ public class Variable {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
 
     Variable variable = (Variable) o;
 
@@ -72,28 +76,30 @@ public class Variable {
     }
   }
 
-  public boolean addReadLock(Transaction t){
-    if(writeLock==t){
+  public boolean addReadLock(Transaction t) {
+    if (writeLock == t) {
       return false;
     }
     return readLocks.add(t);
   }
 
-  public boolean addWriteLock(Transaction t){
-    if(writeLock!=null){
+  public boolean addWriteLock(Transaction t) {
+    if (writeLock != null) {
       return false;
     }
-    writeLock=t;
+    writeLock = t;
     return true;
   }
 
-  void clearWriteLock(){
-    writeLock=null;
+  void clearWriteLock() {
+    writeLock = null;
   }
 
-  void clearReadLockWith(){
+  void clearReadLockWith() {
     readLocks.clear();
   }
 
-
+  public int getVal() {
+    return val;
+  }
 }

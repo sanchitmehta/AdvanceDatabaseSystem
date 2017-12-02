@@ -9,7 +9,7 @@ public class ParseInput {
 
   private static int time;
 
-  private TransactionManager transactionManager = new TransactionManager(runningTransactions);
+  private TransactionManager transactionManager = new TransactionManager();
 
   /**
    * Parses a single line from the text file
@@ -49,7 +49,9 @@ public class ParseInput {
   }
 
   private void parseDump(String line) {
-
+    for (Site site : transactionManager.getSites()) {
+      site.printData();
+    }
   }
 
   private int getTransactionId(String line) {
