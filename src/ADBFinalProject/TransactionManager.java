@@ -6,11 +6,13 @@ import java.util.Map;
 class TransactionManager {
 
   private Map<Integer, Transaction> runningTransactions;
+  private Map<Integer, Transaction> runningReadOnlyTransactions;
   private Site[] sites;
   private static final int NUMBER_OF_SITES = 10;
 
   TransactionManager() {
     this.runningTransactions = new HashMap<>();
+    this.runningReadOnlyTransactions = new HashMap<>();
     createSites();
   }
 
@@ -30,6 +32,17 @@ class TransactionManager {
    */
   void addTransaction(Integer tId, Transaction transaction) {
     runningTransactions.put(tId, transaction);
+  }
+
+  /**
+   * Adds the transaction to the Read Only Transactions map to keep a track of currently running
+   * transactions
+   *
+   * @param tId transaction Id
+   * @param readOnlyTransaction {@code Transaction}
+   */
+  void addReadOnlyTransaction(Integer tId, ReadOnlyTransaction readOnlyTransaction) {
+    runningReadOnlyTransactions.put(tId, readOnlyTransaction);
   }
 
   /**

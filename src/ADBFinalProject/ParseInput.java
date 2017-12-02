@@ -40,9 +40,15 @@ class ParseInput {
 
   private void parseBegin(String line) {
     int transactionId = getTransactionId(line);
-    transactionManager.addTransaction(
-        transactionId,
-        new Transaction(transactionId, time));
+    if (line.contains("RO")) {
+      transactionManager.addReadOnlyTransaction(
+          transactionId,
+          new ReadOnlyTransaction(transactionId, time));
+    } else {
+      transactionManager.addTransaction(
+          transactionId,
+          new Transaction(transactionId, time));
+    }
   }
 
   private void parseEnd(String line) {
