@@ -89,14 +89,11 @@ class Site {
 
   /**
    * Getter for IndexToVariable Map
+   *
    * @return Map
    */
-  public Map<Integer, Variable> getIndexToVarMap() {
+  Map<Integer, Variable> getIndexToVarMap() {
     return indexToVarMap;
-  }
-
-  void printData() {
-
   }
 
   @Override

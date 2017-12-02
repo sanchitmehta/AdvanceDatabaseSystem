@@ -1,7 +1,5 @@
 package ADBFinalProject;
 
-import java.util.Map;
-
 /**
  * Reads the input and parses it
  *
@@ -11,7 +9,13 @@ class ParseInput {
 
   private static int time;
 
-  private TransactionManager transactionManager = new TransactionManager();
+  private TransactionManager transactionManager;
+  private DisplayOutput displayOutput;
+
+  ParseInput() {
+    this.transactionManager = new TransactionManager();
+    this.displayOutput = new DisplayOutput(transactionManager);
+  }
 
   /**
    * Parses a single line from the text file
@@ -26,7 +30,7 @@ class ParseInput {
     } else if (line.startsWith("end")) {
       parseEnd(line);
     } else if (line.startsWith("dump")) {
-      parseDump(line);
+      displayOutput.parseDump(line);
     } else if (line.contains("R(")) {
 
     } else if (line.contains("W(")) {
@@ -57,50 +61,6 @@ class ParseInput {
       System.out.println("The transaction does not exists");
     } else {
       System.out.println("Transaction T" + transactionId + " completed");
-    }
-  }
-
-  private void parseDump(String line) {
-    if (line.equalsIgnoreCase("dump()")) {
-      dump();
-    } else if (line.startsWith("dump(x")) {
-      int variableIdx = Integer.parseInt(
-          line.substring(
-              line.indexOf("x") + 1,
-              line.indexOf(")")));
-      dumpxAtAllSites(variableIdx);
-    } else {
-      int siteNumber = Integer.parseInt(
-          line.substring(
-              line.indexOf("(") + 1,
-              line.indexOf(")")));
-      dumpAtSite(transactionManager.getSites()[siteNumber]);
-    }
-  }
-
-  private void dump() {
-    for (Site site : transactionManager.getSites()) {
-      dumpAtSite(site);
-    }
-  }
-
-  private void dumpAtSite(Site site) {
-    System.out.println(site.toString());
-    Map<Integer, Variable> indexToVarMap = site.getIndexToVarMap();
-    for (Integer index : indexToVarMap.keySet()) {
-      System.out.println("x" + index + " : " + indexToVarMap.get(index).getVal());
-    }
-  }
-
-  private void dumpxAtAllSites(int variableIdx) {
-    for (Site site : transactionManager.getSites()) {
-      Variable variable = site.getVariableByIndex(variableIdx);
-      if (variable != null) {
-        System.out.println(variable.toString() + " " + variable.getVal());
-      } else {
-        System.out.println(
-            "Variable x" + variableIdx + " is not present at site " + site.toString());
-      }
     }
   }
 
