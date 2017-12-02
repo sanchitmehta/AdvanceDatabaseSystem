@@ -91,7 +91,7 @@ class InputParser {
     int variableId = Integer.parseInt(
         line.substring(
             line.indexOf("x") + 1,
-            line.indexOf(")")));
+            line.lastIndexOf(",")));
 
     int value = Integer.parseInt(
         line.substring(
@@ -101,6 +101,8 @@ class InputParser {
     if (transactionManager.abortedTransaction(transactionId)) {
       System.out.println("The Transaction T" + transactionId + "has already been aborted");
     }
+
+    System.out.println(transactionId + " " + variableId + " " + value);
   }
 
   private int getTransactionId(String line) {

@@ -33,6 +33,7 @@ class TransactionManager {
    * @param transaction {@code Transaction}
    */
   void addTransaction(Integer tId, Transaction transaction) {
+    System.out.println(transaction.toString() + " has begun!");
     runningTransactions.put(tId, transaction);
   }
 
@@ -55,8 +56,8 @@ class TransactionManager {
    */
   boolean deleteTransaction(int tId) {
     if (runningTransactions.containsKey(tId)) {
-      runningTransactions.remove(tId);
       Transaction transaction = runningTransactions.get(tId);
+      runningTransactions.remove(tId);
       return transaction.endTransaction();
     } else {
       return false;
