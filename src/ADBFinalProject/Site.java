@@ -11,9 +11,10 @@ import java.util.*;
  * @see Transaction
  * @see TransactionManager
  */
-public class Site {
+class Site {
 
   private int id;
+
   private Map<Integer, Variable> indexToVarMap;
   private Map<Integer, Transaction> runningTransactionsMap;
   private boolean isSiteRunning;
@@ -76,14 +77,36 @@ public class Site {
     return v.addWriteLock(t);
   }
 
-  private int getId() {
-    return id;
+  /**
+   * Checks if the variable with given index is present at this site
+   *
+   * @param variableIdx Index of the variable
+   * @return Variable if present, null otherwise
+   */
+  Variable getVariableByIndex(int variableIdx) {
+    return indexToVarMap.getOrDefault(variableIdx, null);
   }
 
+  /**
+   * Prints the information about all the variables at this site
+   */
   void printData() {
     System.out.println("Site : " + getId());
     for (Integer index : indexToVarMap.keySet()) {
       System.out.println("x" + index + " : " + indexToVarMap.get(index).getVal());
     }
+  }
+
+  @Override
+  public String toString() {
+    return "Site" + id;
+  }
+
+  /**********************************
+   Private Helper Methods
+   **********************************/
+
+  private int getId() {
+    return id;
   }
 }

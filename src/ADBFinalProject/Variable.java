@@ -36,10 +36,15 @@ public class Variable {
     this.val = val;
   }
 
+  @Override
+  public String toString() {
+    return "Variable x" + idx;
+  }
+
   /*
-   * Initialises a variable at particular index,
-   * taking the default value as 10*index.
-   */
+     * Initialises a variable at particular index,
+     * taking the default value as 10*index.
+     */
   public Variable(int idx) {
     this.idx = idx;
     this.val = 10 * idx;
@@ -57,7 +62,6 @@ public class Variable {
     Variable variable = (Variable) o;
 
     return idx == variable.idx;
-
   }
 
   @Override

@@ -5,7 +5,7 @@ package ADBFinalProject;
  *
  * @author Sanchit Mehta, Pranav Chaphekar
  */
-public class ParseInput {
+class ParseInput {
 
   private static int time;
 
@@ -16,7 +16,7 @@ public class ParseInput {
    *
    * @param line String in the file
    */
-  public void parse(String line) {
+  void parse(String line) {
     line = line.replaceAll("\\s+", "");
     time++;
     if (line.startsWith("begin")) {
@@ -31,6 +31,10 @@ public class ParseInput {
 
     }
   }
+
+  /**********************************
+   Private Helper Methods
+   **********************************/
 
   private void parseBegin(String line) {
     int transactionId = getTransactionId(line);
@@ -49,8 +53,42 @@ public class ParseInput {
   }
 
   private void parseDump(String line) {
+    if (line.equalsIgnoreCase("dump()")) {
+      dump();
+    } else if (line.startsWith("dump(x")) {
+      int variableIdx = Integer.parseInt(
+          line.substring(
+              line.indexOf("x") + 1,
+              line.indexOf(")")));
+      dumpxAtAllSites(variableIdx);
+    } else {
+      int siteNumber = Integer.parseInt(
+          line.substring(
+              line.indexOf("(") + 1,
+              line.indexOf(")")));
+      dumpAtSite(transactionManager.getSites()[siteNumber]);
+    }
+  }
+
+  private void dump() {
     for (Site site : transactionManager.getSites()) {
       site.printData();
+    }
+  }
+
+  private void dumpAtSite(Site site) {
+    site.printData();
+  }
+
+  private void dumpxAtAllSites(int variableIdx) {
+    for (Site site : transactionManager.getSites()) {
+      Variable variable = site.getVariableByIndex(variableIdx);
+      if (variable == null) {
+        System.out.println(
+            "Variable x" + variableIdx + " is not present at site " + site.toString());
+      } else {
+        System.out.println(variable.toString() + " " + variable.getVal());
+      }
     }
   }
 
