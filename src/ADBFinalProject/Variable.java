@@ -19,13 +19,11 @@ import java.util.Set;
 public class Variable {
 
   //Transactions holding the read lock
-  Set<Transaction> readLocks;
+  private Set<Transaction> readLocks;
 
   //ADBFinalProject.Transaction holding the write lock
-  Transaction writeLock;
-
-  int idx;
-
+  private Transaction writeLock;
+  private int idx;
   private int val;
 
   /*

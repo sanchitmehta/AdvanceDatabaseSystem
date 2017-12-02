@@ -10,12 +10,12 @@ import java.util.Scanner;
 public class MainApp {
 
   public static void main(String args[]) throws FileNotFoundException {
-    ParseInput parseInput = new ParseInput();
+    InputParser inputParser = new InputParser();
     if (args.length == 1) {
       File file = new File(args[0]);
       Scanner sc = new Scanner(file);
       while (sc.hasNextLine()) {
-        parseInput.parse(sc.nextLine());
+        inputParser.parse(sc.nextLine());
       }
     } else {
       System.out.println(

@@ -2,11 +2,16 @@ package ADBFinalProject;
 
 import java.util.Map;
 
-class DisplayOutput {
+/**
+ * Displays the output
+ *
+ * @author Sanchit Mehta, Pranav Chaphekar
+ */
+class DumpOutput {
 
   private TransactionManager transactionManager;
 
-  DisplayOutput(TransactionManager transactionManager) {
+  DumpOutput(TransactionManager transactionManager) {
     this.transactionManager = transactionManager;
   }
 
@@ -33,8 +38,9 @@ class DisplayOutput {
    **********************************/
 
   private void dump() {
-    for (Site site : transactionManager.getSites()) {
-      dumpAtSite(site);
+    Site[] sites = transactionManager.getSites();
+    for (int i = 1; i < sites.length; i++) {
+      dumpAtSite(sites[i]);
     }
   }
 
@@ -47,13 +53,14 @@ class DisplayOutput {
   }
 
   private void dumpxAtAllSites(int variableIdx) {
-    for (Site site : transactionManager.getSites()) {
-      Variable variable = site.getVariableByIndex(variableIdx);
+    Site[] sites = transactionManager.getSites();
+    for (int i = 1; i < sites.length; i++) {
+      Variable variable = sites[i].getVariableByIndex(variableIdx);
       if (variable != null) {
         System.out.println(variable.toString() + " " + variable.getVal());
       } else {
         System.out.println(
-            "Variable x" + variableIdx + " is not present at site " + site.toString());
+            "Variable x" + variableIdx + " is not present at site " + sites[i].toString());
       }
     }
   }
