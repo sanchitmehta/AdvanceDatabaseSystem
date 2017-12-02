@@ -54,7 +54,8 @@ class TransactionManager {
   boolean deleteTransaction(int tId) {
     if (runningTransactions.containsKey(tId)) {
       runningTransactions.remove(tId);
-      return true;
+      Transaction transaction = runningTransactions.get(tId);
+      return transaction.endTransaction();
     } else {
       return false;
     }

@@ -2,6 +2,11 @@ package ADBFinalProject;
 
 import java.util.Map;
 
+/**
+ * Displays the output
+ *
+ * @author Sanchit Mehta, Pranav Chaphekar
+ */
 class DumpOutput {
 
   private TransactionManager transactionManager;
