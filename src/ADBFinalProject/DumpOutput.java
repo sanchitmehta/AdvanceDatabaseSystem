@@ -2,11 +2,11 @@ package ADBFinalProject;
 
 import java.util.Map;
 
-class DisplayOutput {
+class DumpOutput {
 
   private TransactionManager transactionManager;
 
-  DisplayOutput(TransactionManager transactionManager) {
+  DumpOutput(TransactionManager transactionManager) {
     this.transactionManager = transactionManager;
   }
 

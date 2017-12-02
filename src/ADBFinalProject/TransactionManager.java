@@ -51,7 +51,7 @@ class TransactionManager {
    * @param tId transaction Id
    * @return true if deletion is successful, false otherwise
    */
-  boolean deleteTransaction(Integer tId) {
+  boolean deleteTransaction(int tId) {
     if (runningTransactions.containsKey(tId)) {
       runningTransactions.remove(tId);
       return true;

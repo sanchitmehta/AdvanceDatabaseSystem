@@ -5,16 +5,16 @@ package ADBFinalProject;
  *
  * @author Sanchit Mehta, Pranav Chaphekar
  */
-class ParseInput {
+class InputParser {
 
   private static int time;
 
   private TransactionManager transactionManager;
-  private DisplayOutput displayOutput;
+  private DumpOutput dumpOutput;
 
-  ParseInput() {
+  InputParser() {
     this.transactionManager = new TransactionManager();
-    this.displayOutput = new DisplayOutput(transactionManager);
+    this.dumpOutput = new DumpOutput(transactionManager);
   }
 
   /**
@@ -30,7 +30,7 @@ class ParseInput {
     } else if (line.startsWith("end")) {
       parseEnd(line);
     } else if (line.startsWith("dump")) {
-      displayOutput.parseDump(line);
+      dumpOutput.parseDump(line);
     } else if (line.contains("R(")) {
 
     } else if (line.contains("W(")) {
@@ -57,10 +57,10 @@ class ParseInput {
 
   private void parseEnd(String line) {
     int transactionId = getTransactionId(line);
-    if (!transactionManager.deleteTransaction(transactionId)) {
-      System.out.println("The transaction does not exists");
-    } else {
+    if (transactionManager.deleteTransaction(transactionId)) {
       System.out.println("Transaction T" + transactionId + " completed");
+    } else {
+      System.out.println("The transaction does not exists");
     }
   }
 
