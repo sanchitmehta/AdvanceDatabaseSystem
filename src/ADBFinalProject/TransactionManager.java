@@ -5,14 +5,16 @@ import java.util.Map;
 
 class TransactionManager {
 
-  private Map<Integer, Transaction> runningTransactions;
-  private Map<Integer, Transaction> runningReadOnlyTransactions;
+  Map<Integer, Transaction> runningTransactions;
+  Map<Integer, ReadOnlyTransaction> runningReadOnlyTransactions;
+  private Map<Integer, Transaction> abortedTransactions;
   private Site[] sites;
   private static final int NUMBER_OF_SITES = 10;
 
   TransactionManager() {
     this.runningTransactions = new HashMap<>();
     this.runningReadOnlyTransactions = new HashMap<>();
+    this.abortedTransactions = new HashMap<>();
     createSites();
   }
 
@@ -59,6 +61,33 @@ class TransactionManager {
     } else {
       return false;
     }
+  }
+
+  /**
+   * Deletes the transaction from the running Read Only Transaction map as soon as the transaction
+   * is ended
+   *
+   * @param tId transaction Id
+   * @return true if deletion is successful, false otherwise
+   */
+  boolean deleteReadOnlyTransaction(int tId) {
+    if (runningReadOnlyTransactions.containsKey(tId)) {
+      runningReadOnlyTransactions.remove(tId);
+      ReadOnlyTransaction readOnlyTransaction = runningReadOnlyTransactions.get(tId);
+      return readOnlyTransaction.endTransaction();
+    } else {
+      return false;
+    }
+  }
+
+  /**
+   * Checks if the transaction is aborted or not
+   *
+   * @param tId transaction Id
+   * @return true if transaction is aborted, false otherwise
+   */
+  boolean abortedTransaction(int tId) {
+    return abortedTransactions.containsKey(tId);
   }
 
   /**

@@ -32,9 +32,9 @@ class InputParser {
     } else if (line.startsWith("dump")) {
       dumpOutput.parseDump(line);
     } else if (line.contains("R(")) {
-
+      parseRead(line);
     } else if (line.contains("W(")) {
-
+      parseWrite(line);
     }
   }
 
@@ -59,12 +59,54 @@ class InputParser {
     int transactionId = getTransactionId(line);
     if (transactionManager.deleteTransaction(transactionId)) {
       System.out.println("Transaction T" + transactionId + " completed");
+    } else if (transactionManager.deleteReadOnlyTransaction(transactionId)) {
+      System.out.println("Read Only Transaction T" + transactionId + " completed");
     } else {
       System.out.println("The transaction does not exists");
     }
   }
 
+  private void parseRead(String line) {
+    int transactionId = Integer.parseInt(
+        line.substring(
+            line.indexOf("T") + 1,
+            line.indexOf(",")));
+
+    int variableId = Integer.parseInt(
+        line.substring(
+            line.indexOf("x") + 1,
+            line.indexOf(")")));
+
+    if (transactionManager.abortedTransaction(transactionId)) {
+      System.out.println("The Transaction T" + transactionId + "has already been aborted");
+    }
+  }
+
+  private void parseWrite(String line) {
+    int transactionId = Integer.parseInt(
+        line.substring(
+            line.indexOf("T") + 1,
+            line.indexOf(",")));
+
+    int variableId = Integer.parseInt(
+        line.substring(
+            line.indexOf("x") + 1,
+            line.indexOf(")")));
+
+    int value = Integer.parseInt(
+        line.substring(
+            line.lastIndexOf(",") + 1,
+            line.indexOf(")")));
+
+    if (transactionManager.abortedTransaction(transactionId)) {
+      System.out.println("The Transaction T" + transactionId + "has already been aborted");
+    }
+  }
+
   private int getTransactionId(String line) {
-    return Integer.parseInt(line.substring(line.indexOf("T") + 1, line.indexOf(")")));
+    return Integer.parseInt(
+        line.substring(
+            line.indexOf("T") + 1,
+            line.indexOf(")")));
   }
 }
