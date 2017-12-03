@@ -4,7 +4,8 @@ import java.util.*;
 
 class TransactionManager {
 
-  private static final int NUMBER_OF_SITES = 10;
+  static final int NUMBER_OF_SITES = 10;
+  static final int NUMBER_OF_VARIABLES = 20;
   Map<Integer, Transaction> indexToTransactionMap;
   private Set<Integer> runningTransactions;
   private Set<Integer> readOnlyRunningTransactions;
@@ -358,8 +359,8 @@ class TransactionManager {
     for (Operation op : oldPending) {
       if (op.isWriteOperation()) {
         executeWriteOperation(op.getTransactionId(),
-          op.getVariableId(),
-          op.getVariableVal());
+            op.getVariableId(),
+            op.getVariableVal());
       }
     }
     return true;

@@ -107,7 +107,7 @@ class Site {
 
   @Override
   public String toString() {
-    return "Site" + id;
+    return "Site " + id;
   }
 
   public int getSiteIndex() {
@@ -243,6 +243,24 @@ class Site {
   private Set<Integer> getAllAvailableVarIndex() {
     return this.indexToVarMap.keySet();
   }
+
+//  public String printData(int numVar) {
+//    String siteTitle = String
+//        .format("%4s", "S" + this.getSiteIndex() + ":");
+//    StringBuffer datastring = new StringBuffer(siteTitle);
+//    for (int i = 1; i <= numVar; i++) {
+//      if (indexToVarMap.containsKey(i)) {
+//        String value = String.format("%5s", indexToVarMap.get(i).getVal());
+//        datastring.append(value + "|");
+//      } else {
+//        String value = String.format("%6s", "|");
+//        datastring.append(value);
+//      }
+//    }
+//    //datastring.append("\n Status: " + this.status);
+//    return datastring.toString();
+//  }
+
   /**********************************
    Private Helper Methods
    **********************************/
