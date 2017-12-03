@@ -9,12 +9,14 @@ class TransactionManager {
   private Set<Integer> runningTransactions;
   private Set<Integer> readOnlyRunningTransactions;
   private Set<Integer> abortedTransactions;
+  private Set<Integer> endedTransaction;
   private Site[] sites;
   private DeadlockHandler deadlockHandler;
   private List<Integer> waitList;
   private List<Operation> pendingOperations;
 
   TransactionManager() {
+    this.indexToTransactionMap = new HashMap<>();
     this.runningTransactions = new HashSet<>();
     this.readOnlyRunningTransactions = new HashSet<>();
     this.abortedTransactions = new HashSet<>();
@@ -63,13 +65,46 @@ class TransactionManager {
    * @return true if deletion is successful, false otherwise
    */
   boolean endTransaction(int tId) {
+    Transaction t;
     if (runningTransactions.contains(tId)) {
-      Transaction transaction = indexToTransactionMap.get(tId);
-      indexToTransactionMap.remove(tId);
+      t = indexToTransactionMap.get(tId);
       runningTransactions.remove(tId);
-      return transaction.endTransaction();
+      //t.setEndTime(TIMER);
+      endedTransaction.add(tId);
+      commitTransaction(tId);
+
+      //Set<String> resumeTIDs = waitgraph.getWaitedBySet(TID);
+      //waitgraph.clearEdge(TID);
+      clearLocksByTID(tId);
+      // runPendingOperations();
+      //resumeWaitingTIDs(resumeTIDs);
+      //runPendingOperations();
+    } else if (readOnlyRunningTransactions.contains(tId)) {
+      readOnlyRunningTransactions.remove(tId);
+      t = indexToTransactionMap.remove(tId);
+      //t.setEndTime(TIMER);
+      endedTransaction.add(tId);
+    } else if (abortedTransactions.contains(tId)) {
+      System.out.println(tId + " was aborted and thus cannot commit.");
+    } else {
+      addPendingOperation(new Operation());
     }
-    return false;
+    return true;
+  }
+
+  private boolean commitTransaction(int tId) {
+    for (int i = 1; i < sites.length; i++) {
+      sites[i].executeTransaction(tId);
+    }
+    System.out.println("Transaction " + tId + " committed.");
+    return true;
+  }
+
+  private boolean clearLocksByTID(int tId) {
+    for (int i = 1; i < sites.length; i++) {
+      sites[i].clearLocksOf(tId);
+    }
+    return true;
   }
 
   /**
@@ -128,7 +163,7 @@ class TransactionManager {
     LockRequestStatus status = requestWriteLock(vID, tID);
     switch (status) {
       case TRANSACTION_CAN_GET_LOCK:
-        //updateWriteLocks(vID, tID);
+        updateWriteLocks(vID, tID);
         indexToTransactionMap.get(tID).addOperation(op);
         break;
       case TRANSACTION_WAIT_LISTED:
@@ -137,6 +172,13 @@ class TransactionManager {
       case ALL_SITES_DOWN:
         addPendingOperation(op);
         break;
+    }
+    return true;
+  }
+
+  private boolean updateWriteLocks(int vId, int tID) {
+    for (int i = 1; i < sites.length; i++) {
+      sites[i].updateWriteLock(vId, tID);
     }
     return true;
   }

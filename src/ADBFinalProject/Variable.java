@@ -1,6 +1,7 @@
 package ADBFinalProject;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -23,7 +24,7 @@ class Variable {
   private Set<Integer> readLocks;
 
   //ADBFinalProject.Transaction holding the write lock
-  private Integer writeLock;
+  private int writeLock;
   private int idx;
   private int val;
 
@@ -31,7 +32,7 @@ class Variable {
    * Initialises a variable at particular index
    * and a given value
    */
-  public Variable(int val, int idx) {
+  Variable(int val, int idx) {
     this.val = val;
   }
 
@@ -39,9 +40,11 @@ class Variable {
      * Initialises a variable at particular index,
      * taking the default value as 10*index.
      */
-  public Variable(int idx) {
+  Variable(int idx) {
     this.idx = idx;
     this.val = 10 * idx;
+    readLocks = new HashSet<>();
+    writeLock = -1;
   }
 
   @Override
@@ -92,7 +95,7 @@ class Variable {
   }
 
   void clearWriteLock() {
-    writeLock = null;
+    writeLock = -1;
   }
 
   void clearReadLockWith() {
@@ -113,6 +116,15 @@ class Variable {
 
   boolean hasWriteLock() {
     return writeLock > 0;
+  }
+
+  void updateValue(int val) {
+    this.val = val;
+  }
+
+  void clearAllLocks() {
+    writeLock = -1;
+    readLocks.clear();
   }
 
 }

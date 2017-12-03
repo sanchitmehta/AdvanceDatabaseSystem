@@ -1,5 +1,6 @@
 package ADBFinalProject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 class Transaction {
@@ -13,6 +14,7 @@ class Transaction {
   Transaction(int transactionId, int startTime) {
     this.id = transactionId;
     this.startTime = startTime;
+    operations = new ArrayList<>();
   }
 
   boolean addOperation(Operation op) {
@@ -22,6 +24,14 @@ class Transaction {
       pendingWrite = op.isWriteOperation();
     }
     return true;
+  }
+
+  List<Operation> getPendingOperations() {
+    return operations;
+  }
+
+  public void clearPendingOperations() {
+    operations.clear();
   }
 
   @Override
