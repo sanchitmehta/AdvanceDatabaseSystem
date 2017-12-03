@@ -19,13 +19,11 @@ class Site {
   private int id;
 
   private Map<Integer, Variable> indexToVarMap;
-  private Map<Integer, Transaction> runningTransactionsMap;
   private boolean isSiteRunning;
 
   Site(int id) {
     this.indexToVarMap = new HashMap<>();
     this.isSiteRunning = true;
-    this.runningTransactionsMap = new HashMap<>();
     this.id = id;
     setDefaultVariable(20);
   }
@@ -199,11 +197,20 @@ class Site {
       || this.indexToVarMap.get(varIndex).getWriteLockTID() == tranID;
   }
 
+  boolean commitVariableValue(int vIdx, int newVarVal) {
+    if (!isSiteRunning || !indexToVarMap.containsKey(vIdx)) {
+      return false;
+    }
+    Variable v = indexToVarMap.get(vIdx);
+    v.updateValue(newVarVal);
+    return true;
+  }
+
   boolean executeTransaction(int tId) {
     if (!this.isSiteRunning) {
       return false;
     }
-
+    /*
     for (Operation opTemp : runningTransactionsMap.get(tId).getPendingOperations()) {
       if (opTemp.isWriteOperation()) {
         int newValue = opTemp.getVariableVal();
@@ -215,6 +222,8 @@ class Site {
     }
     this.clearLocksOf(tId);
 
+    return true;
+    */
     return true;
   }
 

@@ -24,6 +24,7 @@ class TransactionManager {
     pendingOperations = new LinkedList<>();
     waitList = new ArrayList<>();
     createSites();
+    endedTransaction = new HashSet<>();
   }
 
   private void createSites() {
@@ -72,13 +73,13 @@ class TransactionManager {
       //t.setEndTime(TIMER);
       endedTransaction.add(tId);
       commitTransaction(tId);
-
-      //Set<String> resumeTIDs = waitgraph.getWaitedBySet(TID);
-      //waitgraph.clearEdge(TID);
+      System.out.println("Ending Transaction " + tId);
+      Set<Integer> resumeTIDs = deadlockHandler.getTransactionsThatWaitFor(tId);
+      deadlockHandler.clearEdge(tId);
       clearLocksByTID(tId);
-      // runPendingOperations();
-      //resumeWaitingTIDs(resumeTIDs);
-      //runPendingOperations();
+      runPendingOperations();
+      resumeWaitingTIDs(resumeTIDs);
+      runPendingOperations();
     } else if (readOnlyRunningTransactions.contains(tId)) {
       readOnlyRunningTransactions.remove(tId);
       t = indexToTransactionMap.remove(tId);
@@ -94,7 +95,18 @@ class TransactionManager {
 
   private boolean commitTransaction(int tId) {
     for (int i = 1; i < sites.length; i++) {
-      sites[i].executeTransaction(tId);
+      //sites[i].executeTransaction(tId);
+      for (Operation opTemp : indexToTransactionMap.get(tId).getPendingOperations()) {
+        if (opTemp.isWriteOperation()) {
+          int newValue = opTemp.getVariableVal();
+          int varIndex = opTemp.getVariableId();
+          sites[i].commitVariableValue(varIndex, newValue);
+          //v.updateValue(newValue);
+          //(newValue, varIndex, T.getTID());
+          sites[i].clearLocksOf(tId);
+        }
+      }
+      //this.clearLocksOf(tId);
     }
     System.out.println("Transaction " + tId + " committed.");
     return true;
@@ -259,12 +271,12 @@ class TransactionManager {
 
     if (lockingT != null
         && lockingT.getStartTime() < requestT.getStartTime()) {
-      String message = "Abort " + requestTID + " for Wait-die by "
+      String message = "Abort " + requestTID + " as it's the youngest transaction by "
           + lockingTID;
-      //abort(requestTID, message);
+      abort(requestTID, message);
       return LockRequestStatus.TRANSACTION_ABORTED;
     } else if (lockingT != null) {
-      //waitgraph.addEdge(requestTID, lockingTID);
+      deadlockHandler.addTransactionEdge(requestTID, lockingTID);
       waitList.add(requestTID);
       System.out.println(requestTID + " moved to waitList.");
       runningTransactions.remove(requestTID);
@@ -295,8 +307,8 @@ class TransactionManager {
   }
 
   private boolean abort(Set<Integer> abortTIDset, String message) {
-    Transaction abortT;
-    //Set<String> resumeTIDs = new HashSet<String>();
+    Set<Integer> resumeTransactions = new HashSet<>();
+    System.out.println(message);
     /*
     if (this.VERBOSE) {
       System.out.println(message);
@@ -305,30 +317,58 @@ class TransactionManager {
     for (int abortTID : abortTIDset) {
       if (abortTID > 0) {
         if (runningTransactions.contains(abortTID)) {
-          abortT = indexToTransactionMap.get(abortTID);
           runningTransactions.remove(abortTID);
           abortedTransactions.add(abortTID);
         }
         if (waitList.contains(abortTID)) {
-          abortT = indexToTransactionMap.get(abortTID);
           waitList.remove(abortTID);
           abortedTransactions.add(abortTID);
         }
-        //resumeTIDs.addAll(deadlockHandler.getWaitedBySet(abortTID));
-        //deadlockHandler.clearEdge(abortTID);
-        //clearLocksByTID(abortTID);
+        resumeTransactions.addAll(deadlockHandler.getTransactionsThatWaitFor(abortTID));
+        deadlockHandler.clearEdge(abortTID);
+        clearLocksByTID(abortTID);
       }
     }
 
-    //resumeWaitingTIDs(resumeTIDs);
-    //runPendingOperations();
+    resumeWaitingTIDs(resumeTransactions);
+    runPendingOperations();
     return true;
   }
 
-  private boolean abort(Integer abortTID, Integer message) {
+
+  private boolean resumeWaitingTIDs(Set<Integer> resumeTIDs) {
+    if (resumeTIDs != null && !resumeTIDs.isEmpty()) {
+      for (int tempTID : resumeTIDs) {
+        if (waitList.contains(tempTID)) {
+          waitList.remove(waitList.indexOf(tempTID));
+          System.out.println(tempTID + " resumed to runningList.");
+          deadlockHandler.clearEdge(tempTID);
+          runningTransactions.add(tempTID);
+          this.runPendingOperations();
+        }
+      }
+      return true;
+    }
+    return false;
+  }
+
+  private boolean runPendingOperations() {
+    Queue<Operation> oldPending = new LinkedList<>(pendingOperations);
+    this.pendingOperations.clear();
+    for (Operation op : oldPending) {
+      if (op.isWriteOperation()) {
+        executeWriteOperation(op.getTransactionId(),
+          op.getVariableId(),
+          op.getVariableVal());
+      }
+    }
+    return true;
+  }
+
+  private boolean abort(Integer abortTID, String message) {
     Set<Integer> abortTIDset = new HashSet<>();
     abortTIDset.add(abortTID);
-    //abort(abortTIDset, message);
+    abort(abortTIDset, message);
     return true;
   }
 

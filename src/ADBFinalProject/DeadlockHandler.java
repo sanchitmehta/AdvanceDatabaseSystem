@@ -15,17 +15,17 @@ import java.util.Set;
  * @see Transaction
  * @see TransactionManager
  */
-public class DeadlockHandler {
+class DeadlockHandler {
 
   private Map<Integer, Set<Integer>> waitsByGraph;
   private Map<Integer, Integer> waitsForGraph;
 
-  public DeadlockHandler() {
+  DeadlockHandler() {
     waitsForGraph = new HashMap<>();
     waitsByGraph = new HashMap<>();
   }
 
-  public boolean addTransactionEdge(int tID1, int tID2) {
+  boolean addTransactionEdge(int tID1, int tID2) {
     if (transactionsHaveCycle(tID1, tID2)) {
       return false;
     } else if (waitsForGraph.containsKey(tID1)
@@ -49,10 +49,30 @@ public class DeadlockHandler {
     return false;
   }
 
-  public boolean transactionsHaveCycle(int tID1, int tID2) {
+  private boolean transactionsHaveCycle(int tID1, int tID2) {
     return (this.waitsForGraph.containsKey(tID2)
       && this.waitsForGraph.get(tID2).equals(tID1))
       || (this.waitsByGraph.containsKey(tID1)
       && this.waitsByGraph.get(tID1).contains(tID2));
+  }
+
+  Set<Integer> getTransactionsThatWaitFor(int tId) {
+    return waitsByGraph.get(tId);
+  }
+
+  boolean clearEdge(int targetTID) {
+    if (this.waitsForGraph.containsKey(targetTID)) {
+      for (int olderTID : this.waitsForGraph.keySet()) {
+        if (this.waitsForGraph.get(olderTID).equals(targetTID)) {
+          this.waitsForGraph.remove(olderTID);
+        }
+      }
+      if (this.waitsByGraph.containsKey(targetTID)) {
+        this.waitsByGraph.remove(targetTID);
+      }
+      return true;
+    } else {
+      return false;
+    }
   }
 }
