@@ -13,11 +13,17 @@ class Operation {
   private int variableVal;
   private boolean isWriteOperation;
 
-  Operation(int transactionId, int variableId, int variableVal, boolean isWriteOperation) {
+  Operation(int transactionId, int variableId, int variableVal) {
     this.transactionId = transactionId;
     this.variableId = variableId;
     this.variableVal = variableVal;
-    this.isWriteOperation = isWriteOperation;
+    this.isWriteOperation = true;
+  }
+
+  Operation(int transactionId, int variableId, boolean isWriteOperation) {
+    this.transactionId = transactionId;
+    this.variableId = variableId;
+    this.isWriteOperation = false;
   }
 
   public int getTransactionId() {
@@ -29,6 +35,9 @@ class Operation {
   }
 
   public int getVariableVal() {
+    if (!isWriteOperation) {
+      throw new UnsupportedOperationException();
+    }
     return variableVal;
   }
 

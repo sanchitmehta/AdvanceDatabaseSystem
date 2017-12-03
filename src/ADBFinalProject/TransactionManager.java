@@ -120,7 +120,7 @@ class TransactionManager {
 
 
   boolean executeWriteOperation(int tID, int vID, int varVal) {
-    Operation op = new Operation(tID, vID, varVal, true);
+    Operation op = new Operation(tID, vID, varVal);
     if (waitList.contains(tID)) {
       addPendingOperation(op);
       return false;
