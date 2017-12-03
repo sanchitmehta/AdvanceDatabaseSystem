@@ -37,39 +37,40 @@ class DumpOutput {
   /**********************************
    Private Helper Methods
    **********************************/
+  /*
+  private void dump() {
+    Site[] sites = transactionManager.getSites();
+    for (int i = 1; i < sites.length; i++) {
+      dumpAtSite(sites[i]);
+    }
+  }
 
-//  private void dump() {
-//    Site[] sites = transactionManager.getSites();
-//    for (int i = 1; i < sites.length; i++) {
-//      dumpAtSite(sites[i]);
-//    }
-//  }
-
-//  private void dump() {
-//    Site[] sites = transactionManager.getSites();
-//    Object[][] data =
-//        new Object[TransactionManager.NUMBER_OF_SITES][TransactionManager.NUMBER_OF_VARIABLES]; // sites will be the columns and variables will be the rows
-//    for (int siteIdx = 1; siteIdx <= data.length; siteIdx++) {
-//      Site current = sites[siteIdx];
-//      Map<Integer, Variable> indexToVarMap = current.getIndexToVarMap();
-//      for (int variableIdx = 1; variableIdx <= data[0].length; variableIdx++) {
-//        Variable variable = indexToVarMap.get(variableIdx);
-//        if (variable == null) {
-//          data[siteIdx - 1][variableIdx - 1] = " ";
-//        } else {
-//          data[siteIdx - 1][variableIdx - 1] = variable.getVal();
-//        }
-//      }
-//    }
-//    String[] columnNames = {"Site 1", "Site 2", "Site 3", "Site 4", "Site 5", "Site 6", "Site 7",
-//        "Site 8", "Site 9", "Site 10", "Site 11", "Site 12", "Site 13", "Site 14", "Site 15", "Site 16",
-//        "Site 17", "Site 18", "Site 19", "Site 20"};
-//    TextTable textTable = new TextTable(columnNames, data);
-//    textTable.setAddRowNumbering(true);
-//    textTable.setSort(0);
-//    textTable.printTable();
-//  }
-  public void dump() {
+  private void dump() {
+    Site[] sites = transactionManager.getSites();
+    Object[][] data =
+        new Object[TransactionManager.NUMBER_OF_SITES][TransactionManager.NUMBER_OF_VARIABLES]; // sites will be the columns and variables will be the rows
+    for (int siteIdx = 1; siteIdx <= data.length; siteIdx++) {
+      Site current = sites[siteIdx];
+      Map<Integer, Variable> indexToVarMap = current.getIndexToVarMap();
+      for (int variableIdx = 1; variableIdx <= data[0].length; variableIdx++) {
+        Variable variable = indexToVarMap.get(variableIdx);
+        if (variable == null) {
+          data[siteIdx - 1][variableIdx - 1] = " ";
+        } else {
+          data[siteIdx - 1][variableIdx - 1] = variable.getVal();
+        }
+      }
+    }
+    String[] columnNames = {"Site 1", "Site 2", "Site 3", "Site 4", "Site 5", "Site 6", "Site 7",
+        "Site 8", "Site 9", "Site 10", "Site 11", "Site 12", "Site 13", "Site 14", "Site 15", "Site 16",
+        "Site 17", "Site 18", "Site 19", "Site 20"};
+    TextTable textTable = new TextTable(columnNames, data);
+    textTable.setAddRowNumbering(true);
+    textTable.setSort(0);
+    textTable.printTable();
+  }
+  */
+  private void dump() {
 //    System.out.println("Variables -> ");
 //    System.out.println("Sites ");
 //    System.out.println("|");
@@ -91,7 +92,7 @@ class DumpOutput {
   }
 
   private void dumpAtSite(Site site) {
-    StringBuffer sb = new StringBuffer(String.format("%8s", site.toString()));
+    StringBuilder sb = new StringBuilder(String.format("%8s", site.toString()));
     sb.append(String.format("%4s", "|"));
     Map<Integer, Variable> indexToVarMap = site.getIndexToVarMap();
     for (int variableIdx = 1; variableIdx <= TransactionManager.NUMBER_OF_VARIABLES;
