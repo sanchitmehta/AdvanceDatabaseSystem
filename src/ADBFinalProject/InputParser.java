@@ -47,7 +47,7 @@ class InputParser {
     if (line.contains("RO")) {
       transactionManager.addReadOnlyTransaction(
           transactionId,
-          new ReadOnlyTransaction(transactionId, time));
+          new ReadOnlyTransaction(transactionId, time, transactionManager.getSites()));
     } else {
       transactionManager.addTransaction(
           transactionId,
@@ -77,33 +77,49 @@ class InputParser {
             line.indexOf("x") + 1,
             line.indexOf(")")));
 
+    // if transaction has been already aborted then do not do anything
     if (transactionManager.isAbortedTransaction(transactionId)) {
       System.out.println("The Transaction T" + transactionId + "has already been aborted");
+    }
+    // if the transaction is a Read Only Transaction, then get the value and print it
+    if (transactionManager.isReadOnlyTransRunning(transactionId)) {
+      ReadOnlyTransaction readOnlyTransaction =
+          (ReadOnlyTransaction) transactionManager
+              .indexToTransactionMap
+              .get(transactionId);
+      Integer variableValue = readOnlyTransaction.getVariableValue(transactionId);
+      if (variableValue != null) {
+        System.out.println(readOnlyTransaction.toString() + " reads x" + variableId
+            + "=" + variableValue);
+      } else {
+        System.out.println(readOnlyTransaction.toString() + " can't read x"
+            + variableId + " because it is not available ");
+      }
     }
   }
 
   private void parseWrite(String inp) {
     int transactionId = Integer.parseInt(
-      inp.substring(
-        inp.indexOf("T") + 1,
-        inp.indexOf(",")));
+        inp.substring(
+            inp.indexOf("T") + 1,
+            inp.indexOf(",")));
 
     int variableId = Integer.parseInt(
-      inp.substring(
-        inp.indexOf("x") + 1,
-        inp.lastIndexOf(",")));
+        inp.substring(
+            inp.indexOf("x") + 1,
+            inp.lastIndexOf(",")));
 
     int value = Integer.parseInt(
-      inp.substring(
-        inp.lastIndexOf(",") + 1,
-        inp.indexOf(")")));
+        inp.substring(
+            inp.lastIndexOf(",") + 1,
+            inp.indexOf(")")));
 
     if (transactionManager.isAbortedTransaction(transactionId)) {
       System.out.println("Could not complete opeation : " + inp
-        + "\nThe Transaction T" +
-        transactionId +
-        "has " +
-        "already been aborted");
+          + "\nThe Transaction T" +
+          transactionId +
+          "has " +
+          "already been aborted");
     }
     transactionManager.executeWriteOperation(transactionId, variableId, value);
   }

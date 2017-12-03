@@ -5,7 +5,7 @@ import java.util.*;
 class TransactionManager {
 
   private static final int NUMBER_OF_SITES = 10;
-  private Map<Integer, Transaction> indexToTransactionMap;
+  Map<Integer, Transaction> indexToTransactionMap;
   private Set<Integer> runningTransactions;
   private Set<Integer> readOnlyRunningTransactions;
   private Set<Integer> abortedTransactions;
@@ -116,11 +116,21 @@ class TransactionManager {
   boolean endReadOnlyTransaction(int tId) {
     if (readOnlyRunningTransactions.contains(tId)) {
       readOnlyRunningTransactions.remove(tId);
-      ReadOnlyTransaction readOnlyTransaction = (ReadOnlyTransaction) indexToTransactionMap.get(tId);
+      ReadOnlyTransaction readOnlyTransaction = (ReadOnlyTransaction) indexToTransactionMap
+          .get(tId);
       return readOnlyTransaction.endTransaction();
     } else {
       return false;
     }
+  }
+
+  /**
+   * Checks if the read only transaction is running or not
+   *
+   * @return true if the read only transaction is running false otherwise
+   */
+  boolean isReadOnlyTransRunning(int tId) {
+    return readOnlyRunningTransactions.contains(tId);
   }
 
   /*
@@ -217,7 +227,7 @@ class TransactionManager {
             int oldestTID = getOldestTID(readlockTransations);
             LockRequestStatus waitDieResult = waitDieProtocol(oldestTID, tID);
             if (waitDieResult == LockRequestStatus.TRANSACTION_WAIT_LISTED
-              || waitDieResult == LockRequestStatus.TRANSACTION_ABORTED) {
+                || waitDieResult == LockRequestStatus.TRANSACTION_ABORTED) {
               return waitDieResult;
             }
           }
@@ -227,7 +237,7 @@ class TransactionManager {
         if (lockingTID > 0 && lockingTID != tID) {
           LockRequestStatus waitDieResult = waitDieProtocol(lockingTID, tID);
           if (waitDieResult == LockRequestStatus.TRANSACTION_WAIT_LISTED
-            || waitDieResult == LockRequestStatus.TRANSACTION_ABORTED) {
+              || waitDieResult == LockRequestStatus.TRANSACTION_ABORTED) {
             return waitDieResult;
           }
         }
@@ -248,9 +258,9 @@ class TransactionManager {
     lockingT = indexToTransactionMap.get(lockingTID);
 
     if (lockingT != null
-      && lockingT.getStartTime() < requestT.getStartTime()) {
+        && lockingT.getStartTime() < requestT.getStartTime()) {
       String message = "Abort " + requestTID + " for Wait-die by "
-        + lockingTID;
+          + lockingTID;
       //abort(requestTID, message);
       return LockRequestStatus.TRANSACTION_ABORTED;
     } else if (lockingT != null) {
