@@ -1,5 +1,6 @@
 package ADBFinalProject;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -16,13 +17,13 @@ import java.util.Set;
  * @see Transaction
  * @see TransactionManager
  */
-public class Variable {
+class Variable {
 
   //Transactions holding the read lock
-  private Set<Transaction> readLocks;
+  private Set<Integer> readLocks;
 
   //ADBFinalProject.Transaction holding the write lock
-  private Transaction writeLock;
+  private Integer writeLock;
   private int idx;
   private int val;
 
@@ -34,11 +35,6 @@ public class Variable {
     this.val = val;
   }
 
-  @Override
-  public String toString() {
-    return "Variable x" + idx;
-  }
-
   /*
      * Initialises a variable at particular index,
      * taking the default value as 10*index.
@@ -46,6 +42,11 @@ public class Variable {
   public Variable(int idx) {
     this.idx = idx;
     this.val = 10 * idx;
+  }
+
+  @Override
+  public String toString() {
+    return "Variable x" + idx;
   }
 
   @Override
@@ -67,29 +68,26 @@ public class Variable {
     return idx;
   }
 
-  public void removeLocksOnTrasanction(List<Transaction> transactions) {
-    for (Transaction t : transactions) {
-      if (readLocks.contains(t)) {
-        readLocks.remove(t);
+  void removeLocksOnTrasanction(List<Integer> transactions) {
+    for (Integer tId : transactions) {
+      if (readLocks.contains(tId)) {
+        readLocks.remove(tId);
       }
     }
     if (transactions.contains(writeLock)) {
-      writeLock = null;
+      writeLock = -1;
     }
   }
 
-  public boolean addReadLock(Transaction t) {
-    if (writeLock == t) {
-      return false;
-    }
-    return readLocks.add(t);
+  boolean addReadLock(int tID) {
+    return writeLock != tID && readLocks.add(tID);
   }
 
-  public boolean addWriteLock(Transaction t) {
-    if (writeLock != null) {
+  boolean addWriteLock(int tID) {
+    if (writeLock > 0) {
       return false;
     }
-    writeLock = t;
+    writeLock = tID;
     return true;
   }
 
@@ -101,7 +99,20 @@ public class Variable {
     readLocks.clear();
   }
 
-  public int getVal() {
+  int getVal() {
     return val;
   }
+
+  List<Integer> getReadLocks() {
+    return new ArrayList<>(readLocks);
+  }
+
+  int getWriteLockTID() {
+    return writeLock;
+  }
+
+  boolean hasWriteLock() {
+    return writeLock > 0;
+  }
+
 }

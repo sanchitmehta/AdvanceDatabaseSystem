@@ -1,6 +1,9 @@
 package ADBFinalProject;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Describes each distributed site that handles
@@ -26,14 +29,18 @@ class Site {
     this.id = id;
   }
 
+  boolean hasVariable(int varIdx) {
+    return indexToVarMap.containsKey(varIdx);
+  }
+
   void failCurrentSite() {
     for (Variable v : indexToVarMap.values()) {
-      v.removeLocksOnTrasanction(new ArrayList<>(runningTransactionsMap.values()));
+      v.removeLocksOnTrasanction(new ArrayList<>(runningTransactionsMap.keySet()));
     }
     this.isSiteRunning = false;
   }
 
-  boolean isSiteRunning() {
+  boolean isRunning() {
     return this.isSiteRunning;
   }
 
@@ -51,9 +58,8 @@ class Site {
         || !indexToVarMap.containsKey(vID)) {
       return false;
     }
-    Transaction t = runningTransactionsMap.get(tID);
     Variable v = indexToVarMap.get(vID);
-    return v.addReadLock(t);
+    return v.addReadLock(tID);
   }
 
 
@@ -71,9 +77,8 @@ class Site {
         || !indexToVarMap.containsKey(vID)) {
       return false;
     }
-    Transaction t = runningTransactionsMap.get(tID);
     Variable v = indexToVarMap.get(vID);
-    return v.addWriteLock(t);
+    return v.addWriteLock(tID);
   }
 
   /**
@@ -100,6 +105,47 @@ class Site {
     return "Site" + id;
   }
 
+  public int getSiteIndex() {
+    return this.id;
+  }
+
+  public Variable getVariableValue(int vIdx) {
+    return indexToVarMap.get(vIdx);
+  }
+
+  int getWriteLockTIDForVariable(int vIdx) {
+    Variable v = indexToVarMap.get(vIdx);
+    if (v == null || !v.hasWriteLock()) {
+      return -1;
+    }
+    return indexToVarMap.get(vIdx).getWriteLockTID();
+  }
+
+  public boolean isReadLockedByVariable(int vIdx) {
+    return indexToVarMap.get(vIdx).getReadLocks().isEmpty();
+  }
+
+  public boolean isReadLockedByTransaction(int vIdx, int tId) {
+    return !indexToVarMap.get(vIdx).getReadLocks().isEmpty()
+      && indexToVarMap.get(vIdx).getReadLocks().contains(tId);
+  }
+
+  boolean isReadyForRecovery() {
+//    if (!this.isSiteRunning && this.isRecovered != null && this.isRecovered) {
+//      return true;
+//    }
+//    return false;
+    return true;
+  }
+
+
+  /*
+   *
+   */
+  List<Integer> getReadLockSet(int vIdx) {
+    return indexToVarMap.get(vIdx).getReadLocks();
+  }
+
   /**********************************
    Private Helper Methods
    **********************************/
@@ -107,4 +153,5 @@ class Site {
   private int getId() {
     return id;
   }
+
 }

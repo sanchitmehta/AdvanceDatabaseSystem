@@ -57,9 +57,9 @@ class InputParser {
 
   private void parseEnd(String line) {
     int transactionId = getTransactionId(line);
-    if (transactionManager.deleteTransaction(transactionId)) {
+    if (transactionManager.endTransaction(transactionId)) {
       System.out.println("Transaction T" + transactionId + " completed");
-    } else if (transactionManager.deleteReadOnlyTransaction(transactionId)) {
+    } else if (transactionManager.endTransaction(transactionId)) {
       System.out.println("Read Only Transaction T" + transactionId + " completed");
     } else {
       System.out.println("The transaction does not exists");
@@ -77,32 +77,35 @@ class InputParser {
             line.indexOf("x") + 1,
             line.indexOf(")")));
 
-    if (transactionManager.abortedTransaction(transactionId)) {
+    if (transactionManager.isAbortedTransaction(transactionId)) {
       System.out.println("The Transaction T" + transactionId + "has already been aborted");
     }
   }
 
-  private void parseWrite(String line) {
+  private void parseWrite(String inp) {
     int transactionId = Integer.parseInt(
-        line.substring(
-            line.indexOf("T") + 1,
-            line.indexOf(",")));
+      inp.substring(
+        inp.indexOf("T") + 1,
+        inp.indexOf(",")));
 
     int variableId = Integer.parseInt(
-        line.substring(
-            line.indexOf("x") + 1,
-            line.lastIndexOf(",")));
+      inp.substring(
+        inp.indexOf("x") + 1,
+        inp.lastIndexOf(",")));
 
     int value = Integer.parseInt(
-        line.substring(
-            line.lastIndexOf(",") + 1,
-            line.indexOf(")")));
+      inp.substring(
+        inp.lastIndexOf(",") + 1,
+        inp.indexOf(")")));
 
-    if (transactionManager.abortedTransaction(transactionId)) {
-      System.out.println("The Transaction T" + transactionId + "has already been aborted");
+    if (transactionManager.isAbortedTransaction(transactionId)) {
+      System.out.println("Could not complete opeation : " + inp
+        + "\nThe Transaction T" +
+        transactionId +
+        "has " +
+        "already been aborted");
     }
-
-    System.out.println(transactionId + " " + variableId + " " + value);
+    transactionManager.executeWriteOperation(transactionId, variableId, value);
   }
 
   private int getTransactionId(String line) {
