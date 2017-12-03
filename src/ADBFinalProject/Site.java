@@ -132,7 +132,7 @@ class Site {
 
   public boolean isReadLockedByTransaction(int vIdx, int tId) {
     return !indexToVarMap.get(vIdx).getReadLocks().isEmpty()
-      && indexToVarMap.get(vIdx).getReadLocks().contains(tId);
+        && indexToVarMap.get(vIdx).getReadLocks().contains(tId);
   }
 
   private void setDefaultVariable(int numVar) {
@@ -194,7 +194,7 @@ class Site {
 
   private boolean isWriteLockedBy(int varIndex, int tranID) {
     return !isWriteLocked(varIndex)
-      || this.indexToVarMap.get(varIndex).getWriteLockTID() == tranID;
+        || this.indexToVarMap.get(varIndex).getWriteLockTID() == tranID;
   }
 
   boolean commitVariableValue(int vIdx, int newVarVal) {
@@ -243,23 +243,6 @@ class Site {
   private Set<Integer> getAllAvailableVarIndex() {
     return this.indexToVarMap.keySet();
   }
-
-//  public String printData(int numVar) {
-//    String siteTitle = String
-//        .format("%4s", "S" + this.getSiteIndex() + ":");
-//    StringBuffer datastring = new StringBuffer(siteTitle);
-//    for (int i = 1; i <= numVar; i++) {
-//      if (indexToVarMap.containsKey(i)) {
-//        String value = String.format("%5s", indexToVarMap.get(i).getVal());
-//        datastring.append(value + "|");
-//      } else {
-//        String value = String.format("%6s", "|");
-//        datastring.append(value);
-//      }
-//    }
-//    //datastring.append("\n Status: " + this.status);
-//    return datastring.toString();
-//  }
 
   /**********************************
    Private Helper Methods
