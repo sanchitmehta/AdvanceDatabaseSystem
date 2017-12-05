@@ -26,7 +26,7 @@ class DeadlockHandler {
   }
 
   boolean addTransactionEdge(int tID1, int tID2) {
-    if (transactionsHaveCycle(tID1, tID2)) {
+    if (transactionsHaveCycle(tID1, tID2) || pathExistsBetween(tID2, tID1, tID2)) {
       return false;
     } else if (waitsForGraph.containsKey(tID1)
       && waitsForGraph.get(tID1) == tID2) {
@@ -39,6 +39,16 @@ class DeadlockHandler {
     return true;
   }
 
+  private boolean pathExistsBetween(int startTNode, int endTNode, int curTNode) {
+    if (curTNode == endTNode) {
+      return true;
+    }
+    if (waitsForGraph.get(curTNode) != null) {
+      return pathExistsBetween(startTNode, endTNode, waitsForGraph.get(curTNode));
+    }
+    return false;
+  }
+
   public boolean removeTransactionEdge(int tID1, int tID2) {
     if (waitsForGraph.containsKey(tID1)
       && waitsForGraph.get(tID1) == tID2) {
@@ -49,21 +59,24 @@ class DeadlockHandler {
     return false;
   }
 
-  private boolean transactionsHaveCycle(int tID1, int tID2) {
+  boolean transactionsHaveCycle(int tID1, int tID2) {
     return (this.waitsForGraph.containsKey(tID2)
       && this.waitsForGraph.get(tID2).equals(tID1))
       || (this.waitsByGraph.containsKey(tID1)
-      && this.waitsByGraph.get(tID1).contains(tID2));
+      && this.waitsByGraph.get(tID1).contains(tID2)
+      || this.pathExistsBetween(tID2, tID1, tID2));
   }
 
-  Set<Integer> getTransactionsThatWaitFor(int tId) {
+  Set<Integer> getTransactionsThatWaitBy(int tId) {
     return waitsByGraph.get(tId);
   }
 
   boolean clearEdge(int targetTID) {
+    Set<Integer> waitsForKeys = new HashSet<>(this.waitsForGraph.keySet());
     if (this.waitsForGraph.containsKey(targetTID)) {
-      for (int olderTID : this.waitsForGraph.keySet()) {
-        if (this.waitsForGraph.get(olderTID).equals(targetTID)) {
+      for (int olderTID : waitsForKeys) {
+        //if (this.waitsForGraph.get(olderTID).equals(targetTID)) {
+        if (olderTID == targetTID) {
           this.waitsForGraph.remove(olderTID);
         }
       }

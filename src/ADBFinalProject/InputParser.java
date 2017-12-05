@@ -76,26 +76,7 @@ class InputParser {
         line.substring(
             line.indexOf("x") + 1,
             line.indexOf(")")));
-
-    // if transaction has been already aborted then do not do anything
-    if (transactionManager.isAbortedTransaction(transactionId)) {
-      System.out.println("The Transaction T" + transactionId + "has already been aborted");
-    }
-    // if the transaction is a Read Only Transaction, then get the value and print it
-    if (transactionManager.isReadOnlyTransRunning(transactionId)) {
-      ReadOnlyTransaction readOnlyTransaction =
-          (ReadOnlyTransaction) transactionManager
-              .indexToTransactionMap
-              .get(transactionId);
-      Integer variableValue = readOnlyTransaction.getVariableValue(transactionId);
-      if (variableValue != null) {
-        System.out.println(readOnlyTransaction.toString() + " reads x" + variableId
-            + "=" + variableValue);
-      } else {
-        System.out.println(readOnlyTransaction.toString() + " can't read x"
-            + variableId + " because it is not available ");
-      }
-    }
+    transactionManager.executeReadOperation(transactionId, variableId);
   }
 
   private void parseWrite(String inp) {

@@ -98,9 +98,13 @@ class Variable {
     writeLock = -1;
   }
 
-  void clearReadLockWith() {
-    readLocks.clear();
+  void clearReadLockByTransaction(int tId) {
+    if (!readLocks.contains(tId)) {
+      return;
+    }
+    readLocks.remove(tId);
   }
+
 
   int getVal() {
     return val;
@@ -118,13 +122,12 @@ class Variable {
     return writeLock > 0;
   }
 
-  void updateValue(int val) {
-    this.val = val;
+  boolean hasReadLockByTransction(int tId) {
+    return readLocks.contains(tId);
   }
 
-  void clearAllLocks() {
-    writeLock = -1;
-    readLocks.clear();
+  void updateValue(int val) {
+    this.val = val;
   }
 
 }

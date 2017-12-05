@@ -30,7 +30,7 @@ class Transaction {
     return operations;
   }
 
-  public void clearPendingOperations() {
+  void clearPendingOperations() {
     operations.clear();
   }
 
@@ -39,6 +39,16 @@ class Transaction {
     return "Transaction{" +
         "id=" + id +
         '}';
+  }
+
+  int getLastWrite(int varIndex) {
+    int result = Integer.MIN_VALUE;
+    for (Operation op : operations) {
+      if (!op.isReadOperation() && op.getVariableId() == varIndex) {
+        result = op.getVariableVal();
+      }
+    }
+    return result;
   }
 
   /**

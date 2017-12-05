@@ -114,8 +114,13 @@ class Site {
     return this.id;
   }
 
-  public Variable getVariableValue(int vIdx) {
-    return indexToVarMap.get(vIdx);
+  int getVariableValue(int vIdx) {
+    return indexToVarMap.get(vIdx).getVal();
+  }
+
+  int getVariableValueWithReadLock(int vIdx, int tId) {
+    indexToVarMap.get(vIdx).addReadLock(tId);
+    return indexToVarMap.get(vIdx).getVal();
   }
 
   int getWriteLockTIDForVariable(int vIdx) {
@@ -193,8 +198,8 @@ class Site {
   }
 
   private boolean isWriteLockedBy(int varIndex, int tranID) {
-    return !isWriteLocked(varIndex)
-        || this.indexToVarMap.get(varIndex).getWriteLockTID() == tranID;
+    return isWriteLocked(varIndex)
+      && this.indexToVarMap.get(varIndex).getWriteLockTID() == tranID;
   }
 
   boolean commitVariableValue(int vIdx, int newVarVal) {
@@ -231,13 +236,34 @@ class Site {
 
     for (Integer varIndex : getAllAvailableVarIndex()) {
       if (this.isWriteLockedBy(varIndex, tranID)) {
-        this.emptyLocks(varIndex);
+        this.clearWriteLockForVariable(varIndex);
+      }
+      if (this.isReadLockedBy(varIndex, tranID)) {
+        this.clearReadLockForVariableWithTransaction(varIndex, tranID);
       }
     }
   }
 
-  private void emptyLocks(int varIndex) {
-    this.indexToVarMap.get(varIndex).clearAllLocks();
+  private boolean isReadLockedBy(int vId, int tId) {
+    return this.indexToVarMap.get(vId).hasReadLockByTransction(tId);
+  }
+
+  private boolean isRecovered() {
+    return true;
+  }
+
+  boolean isVarReadable(int varIndex) {
+    return isRecovered()
+      && this.indexToVarMap.containsKey(varIndex)
+      && isSiteRunning;
+  }
+
+  private void clearWriteLockForVariable(int varIndex) {
+    this.indexToVarMap.get(varIndex).clearWriteLock();
+  }
+
+  private void clearReadLockForVariableWithTransaction(int varIndex, int tId) {
+    this.indexToVarMap.get(varIndex).clearReadLockByTransaction(tId);
   }
 
   private Set<Integer> getAllAvailableVarIndex() {
