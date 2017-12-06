@@ -65,6 +65,14 @@ class Site {
     return true;
   }
 
+  boolean updateLocksForVariable(int vId,int writeLock,List<Integer> readLocks){
+    Variable v = indexToVarMap.get(vId);
+    v.addWriteLock(writeLock);
+    for(int readLockTranId:readLocks){
+      v.addReadLock(readLockTranId);
+    }
+    return true;
+  }
   boolean isRunning() {
     return this.isSiteRunning;
   }

@@ -161,7 +161,7 @@ class TransactionManager {
         abort(tId, "Site is down - Commit not possible, Transaction aborted");
       }
       if(abortedFlag){
-        System.out.println("Aborting transaction - doesn't have enough privileges");
+        System.out.println("Aborting transaction " + tId + " - doesn't have enough privileges");
       }
       else{
         System.out.println("Transaction " + tId + " committed.");
@@ -297,7 +297,7 @@ class TransactionManager {
         }
       } else {
         runningTransactions.remove(tId);
-        System.out.println(tId + " moved to waitList.");
+        //System.out.println(tId + " moved to waitList.");
         this.addPendingOperation(new Operation(tId, vId, false));
         waitList.add(tId);
       }
@@ -350,16 +350,18 @@ class TransactionManager {
       System.out.println("Site Recovery failed");
       return false;
     }
-    /*
+
     for(int vIdx:sites[siteId].getIndexToVarMap().keySet()){
       for(int i=1;i<sites.length;i++){
         if(i!=siteId&&sites[i].hasVariable(vIdx)&&sites[i].isRunning()){
-          sites[siteId].setVariableValue(vIdx,sites[i].getVariableValue(vIdx));
-          recoveredVarCount++;
+          sites[siteId].updateLocksForVariable(vIdx,
+            sites[i].getWriteLockTIDForVariable(vIdx),
+            new ArrayList<>(sites[i].getReadLockSet(vIdx)));
           break;
         }
       }
     }
+    /*
     System.out.println("CNT : "+recoveredVarCount);
     if(recoveredVarCount<sites[siteId].getVariablesSavedOnSite(siteId).size()){
       sites[siteId].failCurrentSite();
@@ -471,7 +473,7 @@ class TransactionManager {
     } else if (lockingT != null) {
       deadlockHandler.addTransactionEdge(requestTID, lockingTID);
       waitList.add(requestTID);
-      System.out.println(requestTID + " moved to waitList.");
+      //System.out.println(requestTID + " moved to waitList.");
       runningTransactions.remove(requestTID);
       return LockRequestStatus.TRANSACTION_WAIT_LISTED;
     }
@@ -538,7 +540,7 @@ class TransactionManager {
       for (int tempTID : tempList) {
         if (resumeTIDs.contains(tempTID)) {
           waitList.remove(waitList.indexOf(tempTID));
-          System.out.println(tempTID + " resumed to runningList.");
+          //System.out.println(tempTID + " resumed to runningList.");
           deadlockHandler.clearEdge(tempTID);
           runningTransactions.add(tempTID);
           this.runPendingOperations();
