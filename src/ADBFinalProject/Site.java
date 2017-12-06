@@ -1,9 +1,6 @@
 package ADBFinalProject;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Describes each distributed site that handles
@@ -32,19 +29,40 @@ class Site {
     return indexToVarMap.containsKey(varIdx);
   }
 
-  boolean setVariableValue(int varIdx, int varVal) {
-    if (!hasVariable(varIdx)) {
-      return false;
-    }
-    indexToVarMap.get(varIdx).updateValue(varVal);
-    return true;
+  void failCurrentSite() {
+      this.isSiteRunning = false;
+      for(int vId:getAllAvailableVarIndex()){
+        this.indexToVarMap.get(vId).clearWriteLock();
+      }
   }
 
-  void failCurrentSite() {
-    for (Variable v : indexToVarMap.values()) {
-      //v.removeLocksOnTrasanction(new ArrayList<>(runningTransactionsMap.keySet()));
+  void recoverSite() {
+    if(isSiteRunning){
+      return;
     }
-    this.isSiteRunning = false;
+    isSiteRunning=true;
+    setDefaultVariable(20);
+  }
+
+  Map<Integer,Integer> getVariablesWithWriteLocks(){
+    Map<Integer,Integer> varLockMap = new HashMap<>();
+    for(int vId:getAllAvailableVarIndex()){
+      if(indexToVarMap.get(vId).hasWriteLock()){
+        varLockMap.put(vId,indexToVarMap.get(vId).getWriteLockTID());
+      }
+    }
+    return varLockMap;
+  }
+
+  boolean recoverSiteVariablesFromBackup(Map<Integer,Integer> varValMap){
+    for(int vId:getAllAvailableVarIndex()){
+      if(varValMap.containsKey(vId)){
+        this.indexToVarMap.get(vId).setVarValue(varValMap.get(vId));
+      }else{
+        return false;
+      }
+    }
+    return true;
   }
 
   boolean isRunning() {
@@ -202,13 +220,12 @@ class Site {
       && this.indexToVarMap.get(varIndex).getWriteLockTID() == tranID;
   }
 
-  boolean commitVariableValue(int vIdx, int newVarVal) {
+  boolean commitVariableValue(int vIdx, int newVarVal,int tId) {
     if (!isSiteRunning || !indexToVarMap.containsKey(vIdx)) {
       return false;
     }
     Variable v = indexToVarMap.get(vIdx);
-    v.updateValue(newVarVal);
-    return true;
+    return v.updateValue(newVarVal,tId);
   }
 
   boolean executeTransaction(int tId) {

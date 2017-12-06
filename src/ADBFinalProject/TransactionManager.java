@@ -15,6 +15,7 @@ class TransactionManager {
   private DeadlockHandler deadlockHandler;
   private List<Integer> waitList;
   private List<Operation> pendingOperations;
+  private Map<Integer, Integer> varValMap;
 
   TransactionManager() {
     this.indexToTransactionMap = new HashMap<>();
@@ -26,6 +27,8 @@ class TransactionManager {
     waitList = new ArrayList<>();
     createSites();
     endedTransaction = new HashSet<>();
+    varValMap = new HashMap<>();
+    setUpVarValMap();
   }
 
   private void createSites() {
@@ -108,29 +111,60 @@ class TransactionManager {
     //sites[i].executeTransaction(tId);
     runOperations(indexToTransactionMap.get(tId).getPendingOperations(), tId);
     indexToTransactionMap.get(tId).clearPendingOperations();
-    System.out.println("Transaction " + tId + " committed.");
+    //System.out.println("Transaction " + tId + " committed.");
     return true;
+  }
+
+  private void setUpVarValMap() {
+    for (int varIndex = 1; varIndex <= TransactionManager.NUMBER_OF_VARIABLES; varIndex++) {
+      this.varValMap.put(varIndex, varIndex * 10);
+    }
   }
 
   private void runOperations(List<Operation> opList, int tId) {
 
+    boolean abortedFlag = false;
     for (Operation opTemp : opList) {
+      int commitCount = 0;
       for (int i = 1; i < sites.length; i++) {
         int varIndex = opTemp.getVariableId();
-        if (opTemp.isWriteOperation() && sites[i].hasVariable(varIndex)) {
+        if (!sites[i].hasVariable(varIndex)) {
+          continue;
+        }
+        if (opTemp.isWriteOperation()) {
           int newValue = opTemp.getVariableVal();
-          sites[i].commitVariableValue(varIndex, newValue);
+          boolean varCommitted = sites[i].commitVariableValue(varIndex, newValue, tId);
+          if (varCommitted) {
+            varValMap.put(varIndex, newValue);
+            commitCount++;
+          } else if (sites[i].isRunning()
+            && sites[i].hasVariable(varIndex)
+            && !varCommitted) {
+            abort(tId, "Aborting transaction - doesn't have enough privleges");
+            abortedFlag = true;
+            //break; // just abort once
+          }
           //v.updateValue(newValue);
           //(newValue, varIndex, T.getTID());
           sites[i].clearLocksOf(tId);
         } else if (opTemp.isReadOperation()) {
-          if (sites[i].hasVariable(varIndex)) {
+          if (sites[i].isRunning()) {
             System.out.println("Transaction " + tId + " read var x"
               + varIndex + "="
               + sites[i].getVariableValue(varIndex) + " from site " + i);
+            commitCount++;
             break;
           }
         }
+      }
+      if (commitCount == 0) {
+        abort(tId, "Site is down - Commit not possible, Transaction aborted");
+      }
+      if(abortedFlag){
+        System.out.println("Aborting transaction - doesn't have enough privileges");
+      }
+      else{
+        System.out.println("Transaction " + tId + " committed.");
       }
     }
   }
@@ -290,6 +324,52 @@ class TransactionManager {
     return -1;
   }
 
+  boolean failSite(int siteId) {
+    if (!sites[siteId].isRunning()) {
+      return false;
+    }
+    Map<Integer, Integer> varLockMap = sites[siteId].getVariablesWithWriteLocks();
+    sites[siteId].failCurrentSite();
+    for (int vId : varLockMap.keySet()) {
+      for (int i = 1; i < sites.length; i++) {
+        if (sites[i].hasVariable(vId)) {
+          sites[i].clearLocksOf(varLockMap.get(vId));
+        }
+      }
+    }
+    return true;
+  }
+
+  boolean recoverSite(int siteId) {
+    if (sites[siteId].isRunning()) {
+      return false;
+    }
+    sites[siteId].recoverSite();
+    int recoveredVarCount = 0;
+    if (!sites[siteId].recoverSiteVariablesFromBackup(varValMap)) {
+      System.out.println("Site Recovery failed");
+      return false;
+    }
+    /*
+    for(int vIdx:sites[siteId].getIndexToVarMap().keySet()){
+      for(int i=1;i<sites.length;i++){
+        if(i!=siteId&&sites[i].hasVariable(vIdx)&&sites[i].isRunning()){
+          sites[siteId].setVariableValue(vIdx,sites[i].getVariableValue(vIdx));
+          recoveredVarCount++;
+          break;
+        }
+      }
+    }
+    System.out.println("CNT : "+recoveredVarCount);
+    if(recoveredVarCount<sites[siteId].getVariablesSavedOnSite(siteId).size()){
+      sites[siteId].failCurrentSite();
+      System.out.println("Site Recovery failed");
+      return false;
+    }
+    */
+    return true;
+  }
+
   private boolean updateWriteLocks(int vId, int tID) {
     for (int i = 1; i < sites.length; i++) {
       sites[i].updateWriteLock(vId, tID);
@@ -421,7 +501,7 @@ class TransactionManager {
 
   private boolean abort(Set<Integer> abortTIDset, String message) {
     Set<Integer> resumeTransactions = new HashSet<>();
-    System.out.println(message);
+    //System.out.println(message);
     /*
     if (this.VERBOSE) {
       System.out.println(message);

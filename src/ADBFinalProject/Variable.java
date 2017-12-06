@@ -105,6 +105,7 @@ class Variable {
     readLocks.remove(tId);
   }
 
+  int getId() {return idx; };
 
   int getVal() {
     return val;
@@ -126,8 +127,16 @@ class Variable {
     return readLocks.contains(tId);
   }
 
-  void updateValue(int val) {
+  void setVarValue(int val) {
     this.val = val;
+  }
+
+  boolean updateValue(int val,int tId) {
+    if(writeLock!=tId){
+      return false;
+    }
+    this.val = val;
+    return true;
   }
 
 }

@@ -35,6 +35,10 @@ class InputParser {
       parseRead(line);
     } else if (line.contains("W(")) {
       parseWrite(line);
+    } else if (line.contains("fail")) {
+      parseFail(line);
+    } else if (line.contains("recover")) {
+      parseRecover(line);
     }
   }
 
@@ -46,12 +50,12 @@ class InputParser {
     int transactionId = getTransactionId(line);
     if (line.contains("RO")) {
       transactionManager.addReadOnlyTransaction(
-          transactionId,
-          new ReadOnlyTransaction(transactionId, time, transactionManager.getSites()));
+        transactionId,
+        new ReadOnlyTransaction(transactionId, time, transactionManager.getSites()));
     } else {
       transactionManager.addTransaction(
-          transactionId,
-          new Transaction(transactionId, time));
+        transactionId,
+        new Transaction(transactionId, time));
     }
   }
 
@@ -68,47 +72,66 @@ class InputParser {
 
   private void parseRead(String line) {
     int transactionId = Integer.parseInt(
-        line.substring(
-            line.indexOf("T") + 1,
-            line.indexOf(",")));
+      line.substring(
+        line.indexOf("T") + 1,
+        line.indexOf(",")));
 
     int variableId = Integer.parseInt(
-        line.substring(
-            line.indexOf("x") + 1,
-            line.indexOf(")")));
+      line.substring(
+        line.indexOf("x") + 1,
+        line.indexOf(")")));
     transactionManager.executeReadOperation(transactionId, variableId);
   }
 
   private void parseWrite(String inp) {
     int transactionId = Integer.parseInt(
-        inp.substring(
-            inp.indexOf("T") + 1,
-            inp.indexOf(",")));
+      inp.substring(
+        inp.indexOf("T") + 1,
+        inp.indexOf(",")));
 
     int variableId = Integer.parseInt(
-        inp.substring(
-            inp.indexOf("x") + 1,
-            inp.lastIndexOf(",")));
+      inp.substring(
+        inp.indexOf("x") + 1,
+        inp.lastIndexOf(",")));
 
     int value = Integer.parseInt(
-        inp.substring(
-            inp.lastIndexOf(",") + 1,
-            inp.indexOf(")")));
+      inp.substring(
+        inp.lastIndexOf(",") + 1,
+        inp.indexOf(")")));
 
     if (transactionManager.isAbortedTransaction(transactionId)) {
-      System.out.println("Could not complete opeation : " + inp
-          + "\nThe Transaction T" +
-          transactionId +
-          "has " +
-          "already been aborted");
+      System.out.println("Could not complete operation : " + inp
+        + "\nThe Transaction T" +
+        transactionId +
+        "has " +
+        "already been aborted");
     }
     transactionManager.executeWriteOperation(transactionId, variableId, value);
   }
 
+  private void parseFail(String inp) {
+    int siteIdx = getSiteIdx(inp);
+    System.out.println("The site " + siteIdx + " has failed");
+    transactionManager.failSite(siteIdx);
+  }
+
+  private void parseRecover(String inp) {
+    int siteIdx = getSiteIdx(inp);
+    System.out.println("Recovering site " + siteIdx);
+    transactionManager.recoverSite(siteIdx);
+  }
+
   private int getTransactionId(String line) {
     return Integer.parseInt(
-        line.substring(
-            line.indexOf("T") + 1,
-            line.indexOf(")")));
+      line.substring(
+        line.indexOf("T") + 1,
+        line.indexOf(")")));
+  }
+
+  private int getSiteIdx(String line) {
+    return Integer.parseInt(
+      line.substring(
+        line.indexOf("(") + 1,
+        line.indexOf(")")));
   }
 }
