@@ -10,11 +10,11 @@ class InputParser {
   private static int time;
 
   private TransactionManager transactionManager;
-  private DumpOutput dumpOutput;
+  private OutputHandler outputHandler;
 
   InputParser() {
     this.transactionManager = new TransactionManager();
-    this.dumpOutput = new DumpOutput(transactionManager);
+    this.outputHandler = new OutputHandler(transactionManager);
   }
 
   /**
@@ -30,7 +30,7 @@ class InputParser {
     } else if (line.startsWith("end")) {
       parseEnd(line);
     } else if (line.startsWith("dump")) {
-      dumpOutput.parseDump(line);
+      outputHandler.dump(line);
     } else if (line.contains("R(")) {
       parseRead(line);
     } else if (line.contains("W(")) {
@@ -61,13 +61,11 @@ class InputParser {
 
   private void parseEnd(String line) {
     int transactionId = getTransactionId(line);
-    if (transactionManager.endTransaction(transactionId)) {
-      System.out.println("Transaction T" + transactionId + " completed");
-    } else if (transactionManager.endTransaction(transactionId)) {
-      System.out.println("Read Only Transaction T" + transactionId + " completed");
-    } else {
-      System.out.println("The transaction does not exists");
+    if (!transactionManager.hasTransaction(transactionId)) {
+      System.out.println("Error: Unrecognised Transaction. Ignoring");
+      return;
     }
+    transactionManager.endTransaction(transactionId);
   }
 
   private void parseRead(String line) {
@@ -111,13 +109,11 @@ class InputParser {
 
   private void parseFail(String inp) {
     int siteIdx = getSiteIdx(inp);
-    System.out.println("The site " + siteIdx + " has failed");
     transactionManager.failSite(siteIdx);
   }
 
   private void parseRecover(String inp) {
     int siteIdx = getSiteIdx(inp);
-    System.out.println("Recovering site " + siteIdx);
     transactionManager.recoverSite(siteIdx);
   }
 

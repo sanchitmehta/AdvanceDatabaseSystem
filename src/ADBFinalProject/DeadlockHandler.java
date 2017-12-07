@@ -17,16 +17,25 @@ import java.util.Set;
  */
 class DeadlockHandler {
 
-  private Map<Integer, Set<Integer>> waitsByGraph;
   private Map<Integer, Integer> waitsForGraph;
+  private Map<Integer, Set<Integer>> waitsByGraph;
 
   DeadlockHandler() {
     waitsForGraph = new HashMap<>();
     waitsByGraph = new HashMap<>();
   }
 
+  /**
+   * Adds an edge to the Waits for Graph and
+   * Waits by Graph
+   *
+   * @param tID1
+   * @param tID2
+   * @return
+   */
   boolean addTransactionEdge(int tID1, int tID2) {
-    if (transactionsHaveCycle(tID1, tID2) || pathExistsBetween(tID2, tID1, tID2)) {
+    if (pathExistsBetween(tID2, tID1)
+      || checkDeadlockForEdge(tID1, tID2)) {
       return false;
     } else if (waitsForGraph.containsKey(tID1)
       && waitsForGraph.get(tID1) == tID2) {
@@ -39,53 +48,72 @@ class DeadlockHandler {
     return true;
   }
 
-  private boolean pathExistsBetween(int startTNode, int endTNode, int curTNode) {
-    if (curTNode == endTNode) {
-      return true;
-    }
-    if (waitsForGraph.get(curTNode) != null) {
-      return pathExistsBetween(startTNode, endTNode, waitsForGraph.get(curTNode));
-    }
-    return false;
-  }
-
-  public boolean removeTransactionEdge(int tID1, int tID2) {
-    if (waitsForGraph.containsKey(tID1)
-      && waitsForGraph.get(tID1) == tID2) {
-      waitsForGraph.remove(tID1);
-      waitsByGraph.get(tID2).remove(tID1);
-      return true;
-    }
-    return false;
-  }
-
-  boolean transactionsHaveCycle(int tID1, int tID2) {
-    return (this.waitsForGraph.containsKey(tID2)
-      && this.waitsForGraph.get(tID2).equals(tID1))
-      || (this.waitsByGraph.containsKey(tID1)
-      && this.waitsByGraph.get(tID1).contains(tID2)
-      || this.pathExistsBetween(tID2, tID1, tID2));
-  }
-
-  Set<Integer> getTransactionsThatWaitBy(int tId) {
-    return waitsByGraph.get(tId);
-  }
-
-  boolean clearEdge(int targetTID) {
+  /**
+   * Removes an edge in the waitsForGraph/waitsByGraph, typically
+   * called when a transaction commits/aborts
+   *
+   * @param tID remove all edges from and to this transation
+   * @return true is remove operation was successful
+   */
+  boolean removeTransactionEdge(int tID) {
     Set<Integer> waitsForKeys = new HashSet<>(this.waitsForGraph.keySet());
-    if (this.waitsForGraph.containsKey(targetTID)) {
+    if (this.waitsForGraph.containsKey(tID)) {
       for (int olderTID : waitsForKeys) {
-        //if (this.waitsForGraph.get(olderTID).equals(targetTID)) {
-        if (olderTID == targetTID) {
+        if (olderTID == tID) {
           this.waitsForGraph.remove(olderTID);
         }
       }
-      if (this.waitsByGraph.containsKey(targetTID)) {
-        this.waitsByGraph.remove(targetTID);
+      if (this.waitsByGraph.containsKey(tID)) {
+        this.waitsByGraph.remove(tID);
       }
       return true;
     } else {
       return false;
     }
+  }
+
+  /**
+   * This method is used to detect a deadlock preemptively
+   *
+   * @param startTID
+   * @param endTID
+   * @return true if an addition of between transactions
+   * startTiD and endTiD would result in a deadlock
+   */
+  boolean checkDeadlockForEdge(int startTID, int endTID) {
+    return (this.waitsForGraph.containsKey(endTID)
+      && this.waitsForGraph.get(endTID).equals(startTID))
+      || (this.waitsByGraph.containsKey(startTID)
+      && this.waitsByGraph.get(startTID).contains(endTID)
+      || this.pathExistsBetween(endTID, startTID));
+  }
+
+  /**
+   * Returns a set of transactions that are waiting
+   * for a transaction to complete
+   *
+   * @param tId : transaction id for which other transactions
+   *            wait
+   * @return : Set of transactions waiting for this transaction
+   */
+  Set<Integer> getTransactionsThatWaitBy(int tId) {
+    return waitsByGraph.get(tId);
+  }
+
+  /**
+   * Uses DFS to to detect if there is a path between two nodes
+   *
+   * @param endTiD end transaction id for dfs
+   * @param curTiD start transaction id for dfs
+   * @return true if there is path between the two nodes
+   */
+  private boolean pathExistsBetween(int curTiD, int endTiD) {
+    if (curTiD == endTiD) {
+      return true;
+    }
+    if (waitsForGraph.get(curTiD) != null) {
+      return pathExistsBetween(waitsForGraph.get(curTiD), endTiD);
+    }
+    return false;
   }
 }

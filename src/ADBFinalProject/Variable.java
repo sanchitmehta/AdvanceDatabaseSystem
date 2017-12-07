@@ -98,6 +98,10 @@ class Variable {
     writeLock = -1;
   }
 
+  void clearAllReadLocks() {
+    readLocks.clear();
+  }
+
   void clearReadLockByTransaction(int tId) {
     if (!readLocks.contains(tId)) {
       return;
@@ -105,7 +109,9 @@ class Variable {
     readLocks.remove(tId);
   }
 
-  int getId() {return idx; };
+  int getId() {
+    return idx;
+  }
 
   int getVal() {
     return val;

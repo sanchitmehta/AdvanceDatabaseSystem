@@ -59,6 +59,7 @@ class TransactionManager {
    * @param readOnlyTransaction {@code Transaction}
    */
   void addReadOnlyTransaction(Integer tId, ReadOnlyTransaction readOnlyTransaction) {
+    System.out.println(readOnlyTransaction.toString() + " has begun!");
     indexToTransactionMap.put(tId, readOnlyTransaction);
     readOnlyRunningTransactions.add(tId);
   }
@@ -73,15 +74,20 @@ class TransactionManager {
     Transaction t;
     if (runningTransactions.contains(tId)) {
       t = indexToTransactionMap.get(tId);
-      //t.setEndTime(TIMER);
-      commitTransaction(tId);
+      if (!commitTransaction(tId)) {
+        runningTransactions.remove(tId);
+        clearLocksByTID(tId);
+        abort(tId, "Aborting Transaction{id=" + tId + "}. Commit Failed");
+        return false;
+      }
       Set<Integer> resumeTIDs = deadlockHandler.getTransactionsThatWaitBy(tId);
-      deadlockHandler.clearEdge(tId);
+      deadlockHandler.removeTransactionEdge(tId);
       clearLocksByTID(tId);
       resumeWaitingTIDs(resumeTIDs);
       runPendingOperations();
       runningTransactions.remove(tId);
       endedTransaction.add(tId);
+      //System.out.println("Transaction " + tId + " committed.");
       //System.out.println("Ending Transaction " + tId);
       //runPendingOperations();
     } else if (readOnlyRunningTransactions.contains(tId)) {
@@ -90,12 +96,26 @@ class TransactionManager {
       //t.setEndTime(TIMER);
       endedTransaction.add(tId);
     } else if (abortedTransactions.contains(tId)) {
-      System.out.println(tId + " was aborted and thus cannot commit.");
+      System.out.println("Transaction{id=" + tId + "} was aborted and thus cannot commit.");
     } else if (runningTransactions.isEmpty() && waitList.contains(tId)) {
       t = indexToTransactionMap.get(tId);
       waitList.remove(waitList.indexOf(tId));
       runningTransactions.add(tId);
       commitTransaction(tId);
+      clearLocksByTID(tId);
+      runPendingOperations();
+      runOperations(indexToTransactionMap.get(tId).getPendingOperations(), tId);
+      runningTransactions.remove(tId);
+      endedTransaction.add(tId);
+    } else if (waitList.contains(tId) && !runningTransactions.isEmpty()) {
+      waitList.remove(waitList.indexOf(tId));
+      runningTransactions.add(tId);
+      if (!commitTransaction(tId)) {
+        runningTransactions.remove(tId);
+        clearLocksByTID(tId);
+        abort(tId, "Aborting Transaction{id=" + tId + "}. Commit Failed");
+        return false;
+      }
       clearLocksByTID(tId);
       runPendingOperations();
       runOperations(indexToTransactionMap.get(tId).getPendingOperations(), tId);
@@ -108,10 +128,11 @@ class TransactionManager {
   }
 
   private boolean commitTransaction(int tId) {
-    //sites[i].executeTransaction(tId);
-    runOperations(indexToTransactionMap.get(tId).getPendingOperations(), tId);
+    if (!runOperations(indexToTransactionMap.get(tId).getPendingOperations(), tId)) {
+      return false;
+    }
     indexToTransactionMap.get(tId).clearPendingOperations();
-    //System.out.println("Transaction " + tId + " committed.");
+    System.out.println("Transaction{id=" + tId + "} committed successfully.");
     return true;
   }
 
@@ -121,7 +142,7 @@ class TransactionManager {
     }
   }
 
-  private void runOperations(List<Operation> opList, int tId) {
+  private boolean runOperations(List<Operation> opList, int tId) {
 
     boolean abortedFlag = false;
     for (Operation opTemp : opList) {
@@ -137,19 +158,23 @@ class TransactionManager {
           if (varCommitted) {
             varValMap.put(varIndex, newValue);
             commitCount++;
+            sites[i].clearWriteLockForVariable(varIndex);
           } else if (sites[i].isRunning()
             && sites[i].hasVariable(varIndex)
             && !varCommitted) {
-            abort(tId, "Aborting transaction - doesn't have enough privleges");
-            abortedFlag = true;
+            abort(tId, "Aborting Transaction{id=" + tId + "} - unable to commit " +
+              "Variable{id=" + varIndex + "}");
+            break;
             //break; // just abort once
           }
           //v.updateValue(newValue);
           //(newValue, varIndex, T.getTID());
-          sites[i].clearLocksOf(tId);
         } else if (opTemp.isReadOperation()) {
           if (sites[i].isRunning()) {
-            System.out.println("Transaction " + tId + " read var x"
+            if (!sites[i].getVariableByIndex(varIndex).hasReadLockByTransction(tId)) {
+              return false;
+            }
+            System.out.println("Transaction{id=" + tId + "} read var x"
               + varIndex + "="
               + sites[i].getVariableValue(varIndex) + " from site " + i);
             commitCount++;
@@ -157,16 +182,13 @@ class TransactionManager {
           }
         }
       }
+      /*
       if (commitCount == 0) {
         abort(tId, "Site is down - Commit not possible, Transaction aborted");
       }
-      if(abortedFlag){
-        System.out.println("Aborting transaction " + tId + " - doesn't have enough privileges");
-      }
-      else{
-        System.out.println("Transaction " + tId + " committed.");
-      }
+      */
     }
+    return true;
   }
 
   private boolean clearLocksByTID(int tId) {
@@ -267,7 +289,7 @@ class TransactionManager {
       ReadOnlyTransaction readOnlyTransaction =
         (ReadOnlyTransaction) this.indexToTransactionMap
           .get(tId);
-      Integer variableValue = readOnlyTransaction.getVariableValue(tId);
+      Integer variableValue = readOnlyTransaction.getVariableValue(vId);
       if (variableValue != null) {
         System.out.println(readOnlyTransaction.toString() + " reads x" + vId
           + "=" + variableValue);
@@ -329,6 +351,7 @@ class TransactionManager {
       return false;
     }
     Map<Integer, Integer> varLockMap = sites[siteId].getVariablesWithWriteLocks();
+    Map<Integer, List<Integer>> varReadLock = sites[siteId].getAllVariablesWithReadLocks();
     sites[siteId].failCurrentSite();
     for (int vId : varLockMap.keySet()) {
       for (int i = 1; i < sites.length; i++) {
@@ -337,6 +360,14 @@ class TransactionManager {
         }
       }
     }
+    for (int vId : varReadLock.keySet()) {
+      for (int i = 1; i < sites.length; i++) {
+        if (sites[i].hasVariable(vId)) {
+          sites[i].clearReadLockTIDsOfVariable(vId, varReadLock.get(vId));
+        }
+      }
+    }
+    System.out.println("Site{id=" + siteId + "} failed");
     return true;
   }
 
@@ -347,13 +378,13 @@ class TransactionManager {
     sites[siteId].recoverSite();
     int recoveredVarCount = 0;
     if (!sites[siteId].recoverSiteVariablesFromBackup(varValMap)) {
-      System.out.println("Site Recovery failed");
+      System.out.println("Site{id=" + siteId + "} recovery failed.");
       return false;
     }
 
-    for(int vIdx:sites[siteId].getIndexToVarMap().keySet()){
-      for(int i=1;i<sites.length;i++){
-        if(i!=siteId&&sites[i].hasVariable(vIdx)&&sites[i].isRunning()){
+    for (int vIdx : sites[siteId].getIndexToVarMap().keySet()) {
+      for (int i = 1; i < sites.length; i++) {
+        if (i != siteId && sites[i].hasVariable(vIdx) && sites[i].isRunning()) {
           sites[siteId].updateLocksForVariable(vIdx,
             sites[i].getWriteLockTIDForVariable(vIdx),
             new ArrayList<>(sites[i].getReadLockSet(vIdx)));
@@ -361,14 +392,7 @@ class TransactionManager {
         }
       }
     }
-    /*
-    System.out.println("CNT : "+recoveredVarCount);
-    if(recoveredVarCount<sites[siteId].getVariablesSavedOnSite(siteId).size()){
-      sites[siteId].failCurrentSite();
-      System.out.println("Site Recovery failed");
-      return false;
-    }
-    */
+    System.out.println("Site{id=" + siteId + "} recovered");
     return true;
   }
 
@@ -451,7 +475,7 @@ class TransactionManager {
     }
     if (status == LockRequestStatus.ALL_SITES_DOWN) {
       waitList.add(tID);
-      System.out.println(tID + " moved to waitList.");
+      System.out.println("Transaction{id=" + tID + "} moved to waitList.");
       runningTransactions.remove(tID);
     }
     return status;
@@ -463,11 +487,10 @@ class TransactionManager {
     requestT = indexToTransactionMap.get(requestTID);
     lockingT = indexToTransactionMap.get(lockingTID);
 
-    if (deadlockHandler.transactionsHaveCycle(requestTID, lockingTID)
+    if (deadlockHandler.checkDeadlockForEdge(requestTID, lockingTID)
       && lockingT != null
       && lockingT.getStartTime() < requestT.getStartTime()) {
-      String message = "Abort " + requestTID + " as it's the youngest transaction by "
-        + lockingTID;
+      String message = "Aborting Transaction{id=" + requestTID + "} due to deadlock.";
       abort(requestTID, message);
       return LockRequestStatus.TRANSACTION_ABORTED;
     } else if (lockingT != null) {
@@ -503,7 +526,7 @@ class TransactionManager {
 
   private boolean abort(Set<Integer> abortTIDset, String message) {
     Set<Integer> resumeTransactions = new HashSet<>();
-    //System.out.println(message);
+    System.out.println(message);
     /*
     if (this.VERBOSE) {
       System.out.println(message);
@@ -516,20 +539,21 @@ class TransactionManager {
           abortedTransactions.add(abortTID);
         }
         if (waitList.contains(abortTID)) {
-          waitList.remove(abortTID);
+          waitList.remove(waitList.indexOf(abortTID));
           abortedTransactions.add(abortTID);
         }
         Set<Integer> nextLevelResumeList = deadlockHandler.getTransactionsThatWaitBy(abortTID);
         if (nextLevelResumeList != null && !nextLevelResumeList.isEmpty()) {
           resumeTransactions.addAll(nextLevelResumeList);
         }
-        deadlockHandler.clearEdge(abortTID);
+        deadlockHandler.removeTransactionEdge(abortTID);
         clearLocksByTID(abortTID);
       }
     }
-
-    resumeWaitingTIDs(resumeTransactions);
-    runPendingOperations();
+    if (runningTransactions.isEmpty()) {
+      resumeWaitingTIDs(resumeTransactions);
+      runPendingOperations();
+    }
     return true;
   }
 
@@ -541,7 +565,7 @@ class TransactionManager {
         if (resumeTIDs.contains(tempTID)) {
           waitList.remove(waitList.indexOf(tempTID));
           //System.out.println(tempTID + " resumed to runningList.");
-          deadlockHandler.clearEdge(tempTID);
+          deadlockHandler.removeTransactionEdge(tempTID);
           runningTransactions.add(tempTID);
           this.runPendingOperations();
           //break;
@@ -572,6 +596,10 @@ class TransactionManager {
     abortTIDset.add(abortTID);
     abort(abortTIDset, message);
     return true;
+  }
+
+  boolean hasTransaction(int tId) {
+    return indexToTransactionMap.containsKey(tId);
   }
 
 }

@@ -19,7 +19,9 @@ class Transaction {
 
   boolean addOperation(Operation op) {
     operations.add(op);
-    System.out.println("Adding a operation to Transaction id " + id);
+    System.out.println("Adding a buffered " +
+      (op.isReadOperation() ? "read" : "write")
+      + " operation to Transaction{id=" + id + "}");
     if (!pendingWrite) {
       pendingWrite = op.isWriteOperation();
     }
