@@ -66,7 +66,7 @@ class Site {
   Map<Integer, List<Integer>> getAllVariablesWithReadLocks() {
     Map<Integer, List<Integer>> varLockMap = new HashMap<>();
     for (int vId : getAllAvailableVarIndex()) {
-      if (indexToVarMap.get(vId).hasWriteLock()) {
+      if (indexToVarMap.get(vId).hasReadLocks()) {
         varLockMap.put(vId, indexToVarMap.get(vId).getReadLocks());
       }
     }

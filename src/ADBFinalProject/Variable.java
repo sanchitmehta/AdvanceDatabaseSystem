@@ -145,4 +145,8 @@ class Variable {
     return true;
   }
 
+  boolean hasReadLocks() {
+    return !readLocks.isEmpty();
+  }
+
 }
