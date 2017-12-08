@@ -21,27 +21,18 @@ class Operation {
     this.variableId = variableId;
     this.variableVal = variableVal;
     this.isWriteOperation = true;
-    isEndOperation = false;
+    this.isEndOperation = false;
   }
 
   Operation(int transactionId, int variableId, boolean isWriteOperation) {
     this.transactionId = transactionId;
     this.variableId = variableId;
     this.isWriteOperation = isWriteOperation;
-    isEndOperation = false;
+    this.isEndOperation = false;
   }
 
   Operation() {
     isEndOperation = false;
-  }
-
-  /**
-   * Checks if the operation has ended
-   *
-   * @return true if the operation has ended, false otherwise
-   */
-  boolean isEndOperation() {
-    return isEndOperation;
   }
 
   /**
@@ -94,12 +85,19 @@ class Operation {
 
   @Override
   public String toString() {
-    return "Operation{" +
-        "transactionId=" + transactionId +
-        ", variableId=" + variableId +
-        ", variableVal=" + variableVal +
-        ", isWriteOperation=" + isWriteOperation +
-        ", isEndOperation=" + isEndOperation +
-        '}';
+    if (this.isWriteOperation) {
+
+      return "Operation{" +
+          "transactionId=" + transactionId +
+          ", variableId=" + variableId +
+          ", variableVal=" + variableVal +
+          "is a write operation";
+    } else {
+      return "Operation{" +
+          "transactionId=" + transactionId +
+          ", variableId=" + variableId +
+          ", variableVal=" + variableVal +
+          ", is a read operation";
+    }
   }
 }

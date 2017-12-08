@@ -1,6 +1,8 @@
 package ADBFinalProject;
 
 /**
+ * Different states that transaction can have
+ *
  * @author Sanchit Mehta, Pranav Chaphekar
  * @see Site
  * @see Transaction
