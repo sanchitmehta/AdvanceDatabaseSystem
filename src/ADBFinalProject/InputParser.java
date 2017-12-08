@@ -61,7 +61,7 @@ class InputParser {
 
   private void parseEnd(String line) {
     int transactionId = getTransactionId(line);
-    if (!transactionManager.hasTransaction(transactionId)) {
+    if (!transactionManager.containsTransaction(transactionId)) {
       System.out.println("Error: Unrecognised Transaction. Ignoring");
       return;
     }

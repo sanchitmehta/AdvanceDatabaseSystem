@@ -2,6 +2,9 @@ package ADBFinalProject;
 
 import java.util.*;
 
+/**
+ * The main manager which controls the entire system
+ */
 class TransactionManager {
 
   static final int NUMBER_OF_VARIABLES = 20;
@@ -14,7 +17,7 @@ class TransactionManager {
   private Site[] sites;
   private DeadlockHandler deadlockHandler;
   private List<Integer> waitList;
-  private List<Operation> pendingOperations;
+  private List<Operation> waitingOperations;
   private Map<Integer, Integer> varValMap;
 
   TransactionManager() {
@@ -23,7 +26,7 @@ class TransactionManager {
     this.readOnlyRunningTransactions = new HashSet<>();
     this.abortedTransactions = new HashSet<>();
     deadlockHandler = new DeadlockHandler();
-    pendingOperations = new LinkedList<>();
+    waitingOperations = new LinkedList<>();
     waitList = new ArrayList<>();
     createSites();
     endedTransaction = new HashSet<>();
@@ -31,6 +34,9 @@ class TransactionManager {
     setUpVarValMap();
   }
 
+  /**
+   * Creates the sites to resemble the distributed system
+   */
   private void createSites() {
     this.sites = new Site[NUMBER_OF_SITES + 1];
     for (int i = 1; i < NUMBER_OF_SITES + 1; i++) {
@@ -42,7 +48,7 @@ class TransactionManager {
    * Adds the transaction to the running Transactions map to keep a track of currently running
    * transactions
    *
-   * @param tId         transaction Id
+   * @param tId transaction Id
    * @param transaction {@code Transaction}
    */
   void addTransaction(Integer tId, Transaction transaction) {
@@ -55,7 +61,7 @@ class TransactionManager {
    * Adds the transaction to the Read Only Transactions map to keep a track of currently running
    * transactions
    *
-   * @param tId                 transaction Id
+   * @param tId transaction Id
    * @param readOnlyTransaction {@code Transaction}
    */
   void addReadOnlyTransaction(Integer tId, ReadOnlyTransaction readOnlyTransaction) {
@@ -84,7 +90,7 @@ class TransactionManager {
       deadlockHandler.removeTransactionEdge(tId);
       clearLocksByTID(tId);
       resumeWaitingTransactions(resumeTIDs);
-      runPendingOperations();
+      runWaitingOperations();
       runningTransactions.remove(tId);
       endedTransaction.add(tId);
       //System.out.println("Transaction " + tId + " committed.");
@@ -103,7 +109,7 @@ class TransactionManager {
       runningTransactions.add(tId);
       commitTransaction(tId);
       clearLocksByTID(tId);
-      runPendingOperations();
+      runWaitingOperations();
       runOperations(indexToTransactionMap.get(tId).getPendingOperations(), tId);
       runningTransactions.remove(tId);
       endedTransaction.add(tId);
@@ -117,7 +123,7 @@ class TransactionManager {
         return false;
       }
       clearLocksByTID(tId);
-      runPendingOperations();
+      runWaitingOperations();
       runOperations(indexToTransactionMap.get(tId).getPendingOperations(), tId);
       runningTransactions.remove(tId);
       endedTransaction.add(tId);
@@ -127,6 +133,12 @@ class TransactionManager {
     return true;
   }
 
+  /**
+   * Commits the transaction
+   *
+   * @param tId The transaction Id
+   * @return true if the transaction has commmitted successfully, false otherwise
+   */
   private boolean commitTransaction(int tId) {
     if (!runOperations(indexToTransactionMap.get(tId).getPendingOperations(), tId)) {
       return false;
@@ -160,10 +172,10 @@ class TransactionManager {
             commitCount++;
             sites[i].clearWriteLockForVariable(varIndex);
           } else if (sites[i].isRunning()
-            && sites[i].hasVariable(varIndex)
-            && !varCommitted) {
+              && sites[i].hasVariable(varIndex)
+              && !varCommitted) {
             abortTransaction(tId, "Aborting Transaction{id=" + tId + "} - unable to commit " +
-              "Variable{id=" + varIndex + "}");
+                "Variable{id=" + varIndex + "}");
             break;
             //break; // just abortTransaction once
           }
@@ -175,8 +187,8 @@ class TransactionManager {
               return false;
             }
             System.out.println("Transaction{id=" + tId + "} read var x"
-              + varIndex + "="
-              + sites[i].getVariableValue(varIndex) + " from site " + i);
+                + varIndex + "="
+                + sites[i].getVariableValue(varIndex) + " from site " + i);
             commitCount++;
             break;
           }
@@ -208,7 +220,7 @@ class TransactionManager {
     if (readOnlyRunningTransactions.contains(tId)) {
       readOnlyRunningTransactions.remove(tId);
       ReadOnlyTransaction readOnlyTransaction = (ReadOnlyTransaction) indexToTransactionMap
-        .get(tId);
+          .get(tId);
       return readOnlyTransaction.endTransaction();
     } else {
       return false;
@@ -251,7 +263,7 @@ class TransactionManager {
   }
 
   private void addPendingOperation(Operation op) {
-    pendingOperations.add(op);
+    waitingOperations.add(op);
   }
 
 
@@ -286,15 +298,15 @@ class TransactionManager {
     // if the transaction is a Read Only Transaction, then get the value and print it
     if (this.isReadOnlyTransRunning(tId)) {
       ReadOnlyTransaction readOnlyTransaction =
-        (ReadOnlyTransaction) this.indexToTransactionMap
-          .get(tId);
+          (ReadOnlyTransaction) this.indexToTransactionMap
+              .get(tId);
       Integer variableValue = readOnlyTransaction.getVariableValue(vId);
       if (variableValue != null) {
         System.out.println(readOnlyTransaction.toString() + " reads x" + vId
-          + "=" + variableValue);
+            + "=" + variableValue);
       } else {
         System.out.println(readOnlyTransaction.toString() + " can't read x"
-          + vId + " because it is not available ");
+            + vId + " because it is not available ");
       }
     } else if (runningTransactions.contains(tId)) {
       if (canReadFromSite(vId)) {
@@ -324,7 +336,7 @@ class TransactionManager {
   private boolean canReadFromSite(int varIndex) {
     for (int i = 1; i < sites.length; i++) {
       if (sites[i].hasVariable(varIndex)
-        && sites[i].isVarReadable(varIndex)) {
+          && sites[i].isVarReadable(varIndex)) {
         return true;
       }
     }
@@ -381,8 +393,8 @@ class TransactionManager {
       for (int i = 1; i < sites.length; i++) {
         if (i != siteId && sites[i].hasVariable(vIdx) && sites[i].isRunning()) {
           sites[siteId].updateLocksForVariable(vIdx,
-            sites[i].getWriteLockTIDForVariable(vIdx),
-            new ArrayList<>(sites[i].getReadLockSet(vIdx)));
+              sites[i].getWriteLockTIDForVariable(vIdx),
+              new ArrayList<>(sites[i].getReadLockSet(vIdx)));
           break;
         }
       }
@@ -442,7 +454,7 @@ class TransactionManager {
             int oldestTID = getOldestTID(readlockTransations);
             LockRequestStatus waitDieResult = shouldWaitOrAbort(oldestTID, tID);
             if (waitDieResult == LockRequestStatus.TRANSACTION_WAIT_LISTED
-              || waitDieResult == LockRequestStatus.TRANSACTION_ABORTED) {
+                || waitDieResult == LockRequestStatus.TRANSACTION_ABORTED) {
               return waitDieResult;
             }
           }
@@ -452,7 +464,7 @@ class TransactionManager {
         if (lockingTID > 0 && lockingTID != tID) {
           LockRequestStatus waitDieResult = shouldWaitOrAbort(lockingTID, tID);
           if (waitDieResult == LockRequestStatus.TRANSACTION_WAIT_LISTED
-            || waitDieResult == LockRequestStatus.TRANSACTION_ABORTED) {
+              || waitDieResult == LockRequestStatus.TRANSACTION_ABORTED) {
             return waitDieResult;
           }
         }
@@ -473,8 +485,8 @@ class TransactionManager {
     Transaction oldTransaction = indexToTransactionMap.get(tID1);
 
     if (deadlockHandler.checkDeadlockForEdge(tID2, tID1)
-      && oldTransaction != null
-      && oldTransaction.getStartTime() < newTransaction.getStartTime()) {
+        && oldTransaction != null
+        && oldTransaction.getStartTime() < newTransaction.getStartTime()) {
       String message = "Aborting Transaction{id=" + tID2 + "} due to deadlock.";
       abortTransaction(tID2, message);
       return LockRequestStatus.TRANSACTION_ABORTED;
@@ -487,6 +499,12 @@ class TransactionManager {
     return LockRequestStatus.TRANSACTION_CAN_GET_LOCK;
   }
 
+  /**
+   * Getter method for returning the oldest transaction Id amongst the set of Ids
+   *
+   * @param transactionIDs The List of transaction Ids
+   * @return The oldest transaction Id
+   */
   private int getOldestTID(List<Integer> transactionIDs) {
     int oldTID = -1;
     Iterator<Integer> readit = transactionIDs.iterator();
@@ -508,6 +526,14 @@ class TransactionManager {
     return oldTID;
   }
 
+  /**
+   * This method aborts the transaction by killing the transaction and giving a call to the deadlock
+   * handler
+   *
+   * @param abortTIDset The set of integer Ids that needs to be aborted
+   * @param message The message to be printed during the abortion
+   * @return true if the transaction is aborted; false otherwise
+   */
   private boolean abortTransaction(Set<Integer> abortTIDset, String message) {
     Set<Integer> resumeTransactions = new HashSet<>();
     System.out.println(message);
@@ -531,43 +557,58 @@ class TransactionManager {
     }
     if (runningTransactions.isEmpty()) {
       resumeWaitingTransactions(resumeTransactions);
-      runPendingOperations();
+      runWaitingOperations();
     }
     return true;
   }
 
 
-  private boolean resumeWaitingTransactions(Set<Integer> resumeTIDs) {
+  /**
+   * This method resumes all the waiting transactions
+   *
+   * @param resumeTIDs The set of ids which needs to be resumed
+   */
+  private void resumeWaitingTransactions(Set<Integer> resumeTIDs) {
     List<Integer> tempList = new ArrayList<>(waitList);
-    if (resumeTIDs != null && !resumeTIDs.isEmpty()) {
+    if (resumeTIDs != null
+        && !resumeTIDs.isEmpty()) {
+
       for (int tempTID : tempList) {
         if (resumeTIDs.contains(tempTID)) {
-          waitList.remove(waitList.indexOf(tempTID));
-          deadlockHandler.removeTransactionEdge(tempTID);
-          runningTransactions.add(tempTID);
-          this.runPendingOperations();
+          waitList.remove(waitList.indexOf(tempTID)); // remove from the waitlist
+          deadlockHandler.removeTransactionEdge(tempTID); // remove the transaction edge
+          runningTransactions.add(tempTID); // run the transactions that needs to be resumed
+          this.runWaitingOperations(); // run all the operations of the waitinh transaction
         }
       }
-      return true;
     }
-    return false;
   }
 
-  private boolean runPendingOperations() {
-    Queue<Operation> oldPending = new LinkedList<>(pendingOperations);
-    this.pendingOperations.clear();
-    for (Operation op : oldPending) {
+  /**
+   * Runs all the waiting operations
+   */
+  private void runWaitingOperations() {
+    Queue<Operation> oldWaiting = new LinkedList<>(waitingOperations);
+    this.waitingOperations.clear();
+    for (Operation op : oldWaiting) {
       if (op.isWriteOperation()) {
-        executeWriteOperation(op.getTransactionId(),
-          op.getVariableId(),
-          op.getVariableVal());
+        executeWriteOperation(
+            op.getTransactionId(),
+            op.getVariableId(),
+            op.getVariableVal());
       } else if (op.isReadOperation()) {
         executeReadOperation(op.getTransactionId(), op.getVariableId());
       }
     }
-    return true;
   }
 
+  /**
+   * Aborts the transaction by adding the transaction Id to the set of transactions
+   *
+   * @param abortTID abort transaction Id
+   * @param message The message to be displayed while aborting the transaction
+   * @return true if the abort is successful
+   */
   private boolean abortTransaction(Integer abortTID, String message) {
     Set<Integer> abortTIDset = new HashSet<>();
     abortTIDset.add(abortTID);
@@ -575,8 +616,13 @@ class TransactionManager {
     return true;
   }
 
-  boolean hasTransaction(int tId) {
+  /**
+   * Checks if the transaction is present
+   *
+   * @param tId Transaction Id
+   * @return true if transaction is present; false otherwise
+   */
+  boolean containsTransaction(int tId) {
     return indexToTransactionMap.containsKey(tId);
   }
-
 }
