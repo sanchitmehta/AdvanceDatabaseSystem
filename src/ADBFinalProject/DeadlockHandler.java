@@ -29,16 +29,16 @@ class DeadlockHandler {
    * Adds an edge to the Waits for Graph and
    * Waits by Graph
    *
-   * @param tID1
-   * @param tID2
-   * @return
+   * @param tID1 start transaction Id
+   * @param tID2 end transaction Id
+   * @return true if everything is successful; false otherwise
    */
   boolean addTransactionEdge(int tID1, int tID2) {
     if (pathExistsBetween(tID2, tID1)
-      || checkDeadlockForEdge(tID1, tID2)) {
+        || checkDeadlockForEdge(tID1, tID2)) {
       return false;
     } else if (waitsForGraph.containsKey(tID1)
-      && waitsForGraph.get(tID1) == tID2) {
+        && waitsForGraph.get(tID1) == tID2) {
       return false;
     }
     waitsForGraph.put(tID1, tID2);
@@ -73,27 +73,24 @@ class DeadlockHandler {
   }
 
   /**
-   * This method is used to detect a deadlock preemptively
+   * This method is used to detect a deadlock pre-emptively
    *
-   * @param startTID
-   * @param endTID
-   * @return true if an addition of between transactions
-   * startTiD and endTiD would result in a deadlock
+   * @return true if an addition of between transactions startTiD and endTiD would result in a
+   * deadlock
    */
   boolean checkDeadlockForEdge(int startTID, int endTID) {
     return (this.waitsForGraph.containsKey(endTID)
-      && this.waitsForGraph.get(endTID).equals(startTID))
-      || (this.waitsByGraph.containsKey(startTID)
-      && this.waitsByGraph.get(startTID).contains(endTID)
-      || this.pathExistsBetween(endTID, startTID));
+        && this.waitsForGraph.get(endTID).equals(startTID))
+        || (this.waitsByGraph.containsKey(startTID)
+        && this.waitsByGraph.get(startTID).contains(endTID)
+        || this.pathExistsBetween(endTID, startTID));
   }
 
   /**
    * Returns a set of transactions that are waiting
    * for a transaction to complete
    *
-   * @param tId : transaction id for which other transactions
-   *            wait
+   * @param tId : transaction id for which other transactions wait
    * @return : Set of transactions waiting for this transaction
    */
   Set<Integer> getTransactionsThatWaitBy(int tId) {
@@ -108,12 +105,8 @@ class DeadlockHandler {
    * @return true if there is path between the two nodes
    */
   private boolean pathExistsBetween(int curTiD, int endTiD) {
-    if (curTiD == endTiD) {
-      return true;
-    }
-    if (waitsForGraph.get(curTiD) != null) {
-      return pathExistsBetween(waitsForGraph.get(curTiD), endTiD);
-    }
-    return false;
+    return curTiD == endTiD
+        || waitsForGraph.get(curTiD) != null
+        && pathExistsBetween(waitsForGraph.get(curTiD), endTiD);
   }
 }
