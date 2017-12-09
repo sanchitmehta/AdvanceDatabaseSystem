@@ -9,6 +9,7 @@ import java.util.Scanner;
  */
 public class MainApp {
 
+  static final LogLevel logLevel = LogLevel.CONSISE;
   public static void main(String args[]) throws FileNotFoundException {
     InputParser inputParser = new InputParser();
     if (args.length == 1) {
