@@ -370,7 +370,6 @@ class TransactionManager {
       return false;
     }
     sites[siteId].recoverSite();
-    int recoveredVarCount = 0;
     if (!sites[siteId].recoverSiteVariablesFromBackup(globalVariableValueMap)) {
       System.out.println("Site{id=" + siteId + "} recovery failed.");
       return false;
@@ -410,26 +409,16 @@ class TransactionManager {
   private LockRequestStatus requestWriteLock(int vID, int tID) {
     //Assuming by default all the sites are down
     LockRequestStatus status = LockRequestStatus.ALL_SITES_DOWN;
-    boolean atleastOneSiteIsRunning = false;
-    for (int i = 1; i < sites.length; i++) {
-      if (sites[i].hasVariable(vID)) {
-        if (sites[i].isRunning() && sites[i].isReadyForRecovery()) {
-          atleastOneSiteIsRunning = true;
-          break;
-        }
-      }
-    }
-
-    if (atleastOneSiteIsRunning) {
+    if (atleastOneSiteIsRunning(vID)) {
       for (int i = 1; i < sites.length; i++) {
         status = LockRequestStatus.TRANSACTION_CAN_GET_LOCK;
         if (!sites[i].hasVariable(vID)) {
           continue;
         }
-        List<Integer> readlockTransactions = sites[i].getReadLockSet(vID);
-        if (!readlockTransactions.isEmpty()) {
-          if (readlockTransactions.size() == 1) {
-            int currTID = readlockTransactions.get(0);
+        List<Integer> readlockTransactionsIDList = sites[i].getReadLockSet(vID);
+        if (!readlockTransactionsIDList.isEmpty()) {
+          if (readlockTransactionsIDList.size() == 1) {
+            int currTID = readlockTransactionsIDList.get(0);
             //Promoting read lock to write lock
             if (currTID == tID) {
               return status;
@@ -437,7 +426,7 @@ class TransactionManager {
               return shouldWaitOrAbort(currTID, tID);
             }
           } else {
-            int oldestTID = getOldestTransactionID(readlockTransactions);
+            int oldestTID = getOldestTransactionID(readlockTransactionsIDList);
             LockRequestStatus lockStatus = shouldWaitOrAbort(oldestTID, tID);
             if (lockStatus == LockRequestStatus.TRANSACTION_WAIT_LISTED
               || lockStatus == LockRequestStatus.TRANSACTION_ABORTED) {
@@ -456,6 +445,24 @@ class TransactionManager {
         }
       }
     }
+    updateTransactionForSysFailure(status, tID);
+    return status;
+  }
+
+  private boolean atleastOneSiteIsRunning(int vID) {
+    boolean status = false;
+    for (int i = 1; i < sites.length; i++) {
+      if (sites[i].hasVariable(vID)) {
+        if (sites[i].isRunning() && sites[i].isReadyForRecovery()) {
+          status = true;
+          break;
+        }
+      }
+    }
+    return status;
+  }
+
+  private void updateTransactionForSysFailure(LockRequestStatus status, int tID) {
     if (status == LockRequestStatus.ALL_SITES_DOWN) {
       if (!abortedTransactions.contains(tID) && MainApp.logLevel == LogLevel.VERBOSE) {
         System.out.println("Transaction{id=" + tID + "} moved to waitingTransactions because " +
@@ -465,7 +472,6 @@ class TransactionManager {
       waitingTransactions.add(tID);
       runningTransactions.remove(tID);
     }
-    return status;
   }
 
   private LockRequestStatus shouldWaitOrAbort(int tID1, int tID2) {
