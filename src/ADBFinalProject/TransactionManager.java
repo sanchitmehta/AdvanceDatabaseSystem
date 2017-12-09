@@ -211,23 +211,6 @@ class TransactionManager {
   }
 
   /**
-   * Ends a read only transaction and removes it from the  Read Only Transaction
-   *
-   * @param tId transaction Id
-   * @return true if deletion is successful, false otherwise
-   */
-  boolean endReadOnlyTransaction(int tId) {
-    if (readOnlyRunningTransactions.contains(tId)) {
-      readOnlyRunningTransactions.remove(tId);
-      ReadOnlyTransaction readOnlyTransaction = (ReadOnlyTransaction) indexToTransactionMap
-          .get(tId);
-      return readOnlyTransaction.endTransaction();
-    } else {
-      return false;
-    }
-  }
-
-  /**
    * Checks if the read only transaction is running or not
    *
    * @return true if the read only transaction is running false otherwise

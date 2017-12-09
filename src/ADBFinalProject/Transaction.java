@@ -7,7 +7,6 @@ class Transaction {
 
   private final int id;
   private final int startTime;
-  private int endTime;
   private List<Operation> operations;
   private boolean pendingWrite;
 
@@ -17,21 +16,35 @@ class Transaction {
     operations = new ArrayList<>();
   }
 
+  /**
+   * Adds the operation to the queue
+   *
+   * @param op The operation
+   * @return true if successful, false otherwise
+   */
   boolean addOperation(Operation op) {
     operations.add(op);
-    System.out.println("Adding a buffered " +
-      (op.isReadOperation() ? "read" : "write")
-      + " operation to Transaction{id=" + id + "}");
+    System.out.println("Adding " +
+        (op.isReadOperation() ? "read" : "write")
+        + " operation to Transaction{id=" + id + "}");
     if (!pendingWrite) {
       pendingWrite = op.isWriteOperation();
     }
     return true;
   }
 
+  /**
+   * Gets the list of pending operations
+   *
+   * @return List of pending operations
+   */
   List<Operation> getPendingOperations() {
     return operations;
   }
 
+  /**
+   * Deletes all the pending operations
+   */
   void clearPendingOperations() {
     operations.clear();
   }
@@ -43,36 +56,21 @@ class Transaction {
         '}';
   }
 
-  int getLastWrite(int varIndex) {
-    int result = Integer.MIN_VALUE;
-    for (Operation op : operations) {
-      if (!op.isReadOperation() && op.getVariableId() == varIndex) {
-        result = op.getVariableVal();
-      }
-    }
-    return result;
-  }
-
   /**
-   * Ends this transaction
+   * Getter method for the id of this transaction
    *
-   * @return true if transaction has been terminated successfully, false otherwise
+   * @return transaction Id
    */
-  boolean endTransaction() {
-    // To be implemented - (clean up processes)
-    System.out.println(this.toString() + " has ended");
-    return true;
-  }
-
   int getId() {
     return id;
   }
 
+  /**
+   * Getter method for the start time of the transaction
+   *
+   * @return time when the transaction has started
+   */
   int getStartTime() {
     return startTime;
-  }
-
-  public int getEndTime() {
-    return endTime;
   }
 }
