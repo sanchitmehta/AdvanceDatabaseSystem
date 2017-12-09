@@ -108,7 +108,7 @@ class InputParser {
           transactionId +
           "has already been aborted");
     }
-    transactionManager.executeWriteOperation(transactionId, variableId, value);
+    transactionManager.executeWriteOperation(transactionId, variableId, value,time);
   }
 
   private void parseFail(String inp) {

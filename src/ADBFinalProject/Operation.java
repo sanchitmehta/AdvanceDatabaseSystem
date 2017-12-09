@@ -15,13 +15,15 @@ class Operation {
   private int variableVal;
   private boolean isWriteOperation;
   private boolean isEndOperation;
+  private int startTime;
 
-  Operation(int transactionId, int variableId, int variableVal) {
+  Operation(int transactionId, int variableId, int variableVal,int time) {
     this.transactionId = transactionId;
     this.variableId = variableId;
     this.variableVal = variableVal;
     this.isWriteOperation = true;
     this.isEndOperation = false;
+    this.startTime=time;
   }
 
   Operation(int transactionId, int variableId, boolean isWriteOperation) {
@@ -81,6 +83,10 @@ class Operation {
       throw new UnsupportedOperationException();
     }
     return variableVal;
+  }
+
+  int getStartTime(){
+    return this.startTime;
   }
 
   @Override
