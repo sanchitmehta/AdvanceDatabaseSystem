@@ -23,15 +23,6 @@ class ReadOnlyTransaction extends Transaction {
   }
 
   /**
-   * Getter method for the variable values at the start
-   *
-   * @return Integer array containing the variable values
-   */
-  Integer[] getVariableValuesAtStart() {
-    return this.variableValuesAtStart;
-  }
-
-  /**
    * Gets the value of the variable
    *
    * @param variableIndex the index of the variable
