@@ -61,6 +61,9 @@ class InputParser {
 
   private void parseEnd(String line) {
     int transactionId = getTransactionId(line);
+    if (!isValidTiD(transactionId)) {
+      return;
+    }
     if (!transactionManager.containsTransaction(transactionId)) {
       System.out.println("Error: Unrecognised Transaction. Ignoring");
       return;
@@ -78,6 +81,9 @@ class InputParser {
         line.substring(
             line.indexOf("x") + 1,
             line.indexOf(")")));
+    if (!isValidTiD(transactionId)) {
+      return;
+    }
     transactionManager.executeReadOperation(transactionId, variableId);
   }
 
@@ -96,7 +102,6 @@ class InputParser {
         inp.substring(
             inp.lastIndexOf(",") + 1,
             inp.indexOf(")")));
-
     if (transactionManager.isAbortedTransaction(transactionId)) {
       System.out.println("Could not complete operation : " + inp
           + "\nThe Transaction T" +
@@ -128,5 +133,13 @@ class InputParser {
         line.substring(
             line.indexOf("(") + 1,
             line.indexOf(")")));
+  }
+
+  private boolean isValidTiD(int tId) {
+    if (!transactionManager.containsTransaction(tId)) {
+      System.out.println("Error: Unrecognised Transaction. Ignoring");
+      return false;
+    }
+    return true;
   }
 }
