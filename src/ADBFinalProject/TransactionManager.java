@@ -92,7 +92,6 @@ class TransactionManager {
         runningTransactions.remove(tId);
         resetLocksByTID(tId);
         abortTransactionMgr(tId, "Aborting Transaction{id=" + tId + "}. Commit Failed");
-        return false;
       }
       Set<Integer> resumeTIDs = deadlockHandler.getTransactionsThatWaitBy(tId);
       deadlockHandler.removeTransactionEdge(tId);
@@ -117,9 +116,6 @@ class TransactionManager {
       }
       runOperations(indexToTransactionMap.get(tId).getPendingOperations(), tId);
       runningTransactions.remove(tId);
-      if (!waitingTransactions.contains(tId) && !abortedTransactions.contains(tId)) {
-        System.out.println("Transaction{id=" + tId + "} committed successfully.");
-      }
       endedTransaction.add(tId);
     } else if (waitingTransactions.contains(tId) && !runningTransactions.isEmpty()) {
       waitingTransactions.remove(waitingTransactions.indexOf(tId));
@@ -128,7 +124,6 @@ class TransactionManager {
         runningTransactions.remove(tId);
         resetLocksByTID(tId);
         abortTransactionMgr(tId, "Aborting Transaction{id=" + tId + "}. Commit Failed");
-        return false;
       }
       resetLocksByTID(tId);
       runWaitingOperations();
@@ -137,6 +132,10 @@ class TransactionManager {
       endedTransaction.add(tId);
     } else {
       addPendingOperation(new Operation());
+    }
+    if (!waitingTransactions.contains(tId)
+        && !abortedTransactions.contains(tId)) {
+      System.out.println("Transaction{id=" + tId + "} committed successfully.");
     }
     return true;
   }
@@ -421,7 +420,9 @@ class TransactionManager {
             int currTID = readlockTransactionsIDList.get(0);
             //Promoting read lock to write lock
             if (currTID == tID) {
-              return status;
+              System.out.println("Promoting Read lock of Variable{id="+vID+"} of Transaction"
+                  + "{id="+currTID+"} to write lock");
+              return LockRequestStatus.TRANSACTION_ABORTED;
             } else {
               return shouldWaitOrAbort(currTID, tID);
             }
@@ -532,11 +533,9 @@ class TransactionManager {
       if (abortTID > 0) {
         if (runningTransactions.contains(abortTID)) {
           runningTransactions.remove(abortTID);
-          abortedTransactions.add(abortTID);
         }
         if (waitingTransactions.contains(abortTID)) {
           waitingTransactions.remove(waitingTransactions.indexOf(abortTID));
-          abortedTransactions.add(abortTID);
         }
         Set<Integer> nextLevelResumeList = deadlockHandler.getTransactionsThatWaitBy(abortTID);
         if (nextLevelResumeList != null && !nextLevelResumeList.isEmpty()) {
@@ -544,6 +543,7 @@ class TransactionManager {
         }
         deadlockHandler.removeTransactionEdge(abortTID);
         resetLocksByTID(abortTID);
+        abortedTransactions.add(abortTID);
       }
     }
     if (runningTransactions.isEmpty()) {
